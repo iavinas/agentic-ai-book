@@ -2,7 +2,7 @@
  * Persist web-highlighter marks in localStorage (per pathname).
  * Restores after KaTeX + Mermaid (`book:content-ready`) and on window.load.
  *
- * Removing: Alt-click (or Ctrl/Meta-click) the highlight, or clear all via the docked panel.
+ * Removing: Alt-click a highlight, or use the compact corner control to clear the page.
  */
 (function () {
   var STORAGE_KEY = 'agenticAiBook.readerHighlights.v1';
@@ -64,18 +64,58 @@
     if (!bag[path].length) delete bag[path];
   }
 
-  function bindClearPanel(onClearPage) {
-    if (document.getElementById('reader-highlight-panel')) return;
-    var panel = document.createElement('div');
-    panel.id = 'reader-highlight-panel';
-    panel.innerHTML =
-      '<button type="button" id="reader-highlight-clear">Clear page highlights</button>' +
-      '<p class="reader-highlight-hint">Saved in this browser (localStorage). Alt-click a highlight to remove it.</p>';
-    panel.querySelector('#reader-highlight-clear').addEventListener('click', function () {
+  function bindHighlightFab(onClearPage) {
+    if (document.getElementById('reader-highlight-ui')) return;
+
+    var wrap = document.createElement('div');
+    wrap.id = 'reader-highlight-ui';
+    wrap.setAttribute('aria-label', 'Highlight tools');
+    wrap.innerHTML =
+      '<div id="reader-highlight-popover" class="reader-highlight-popover" role="dialog" aria-hidden="true" hidden>' +
+      '  <button type="button" id="reader-highlight-clear" class="reader-highlight-clear-btn">Clear page highlights</button>' +
+      '  <p class="reader-highlight-micro">Alt+click a mark to remove one. Saved only in this browser.</p>' +
+      '</div>' +
+      '<button type="button" id="reader-highlight-fab" class="reader-highlight-fab" aria-haspopup="dialog" aria-expanded="false" title="Highlights: select text to save. Alt+click a mark to remove. Open for clear.">' +
+      '  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '    <path fill="currentColor" d="M15.5 4l4.5 4.5-9.2 9.2-3.5.7.7-3.5L15.5 4zm0 2.1L8.3 13.3l-.3 1.5 1.5-.3 7.2-7.2-1.3-1.3zM5 20h14v2H5v-2z"/>' +
+      '  </svg>' +
+      '</button>';
+
+    document.body.appendChild(wrap);
+
+    var pop = wrap.querySelector('#reader-highlight-popover');
+    var fab = wrap.querySelector('#reader-highlight-fab');
+    var clearBtn = wrap.querySelector('#reader-highlight-clear');
+
+    function setOpen(open) {
+      pop.hidden = !open;
+      pop.setAttribute('aria-hidden', open ? 'false' : 'true');
+      fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function isInsideUi(t) {
+      return wrap === t || wrap.contains(t);
+    }
+
+    fab.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setOpen(pop.hidden);
+    });
+
+    clearBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
       if (typeof window.confirm === 'function' && !window.confirm('Remove every highlight on this page from this browser?')) return;
+      setOpen(false);
       onClearPage();
     });
-    document.body.appendChild(panel);
+
+    document.addEventListener('click', function (e) {
+      if (!isInsideUi(e.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setOpen(false);
+    });
   }
 
   function bootHighlighter() {
@@ -97,7 +137,7 @@
         '.mermaid',
         '.chapter-footer',
         'figcaption',
-        '#reader-highlight-panel'
+        '#reader-highlight-ui'
       ],
       style: { className: 'reader-highlight-wrap' },
       verbose: false
@@ -178,7 +218,7 @@
       }, DEBOUNCE_MS);
     }
 
-    bindClearPanel(clearEverythingOnPage);
+    bindHighlightFab(clearEverythingOnPage);
 
     window.addEventListener('book:content-ready', scheduleRestore);
     window.addEventListener('load', scheduleRestore);
