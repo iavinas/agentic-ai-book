@@ -55,7 +55,11 @@
         else resolve();
       });
       injectMermaidFromCodeBlocks();
-      await mermaid.run();
+      try {
+        await mermaid.run();
+      } finally {
+        window.dispatchEvent(new CustomEvent('book:content-ready', { bubbles: false }));
+      }
     }
     bootMermaid();
   </script>
@@ -263,6 +267,54 @@
       h1 { font-size: 1.8rem; }
       h2 { font-size: 1.3rem; }
     }
+
+    /* Reader highlights (web-highlighter) */
+    .reader-highlight-wrap {
+      padding: 0 0.04em;
+      border-radius: 3px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+      background: rgba(250, 238, 218, 0.85);
+      border-bottom: 2px solid rgba(133, 79, 11, 0.25);
+    }
+    #reader-highlight-panel {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 50;
+      max-width: min(340px, calc(100vw - 28px));
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 30px rgba(26, 26, 24, 0.12);
+      font-family: var(--font-ui);
+    }
+    #reader-highlight-panel button {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-1);
+      background: var(--amber-light);
+      border: 1px solid rgba(133, 79, 11, 0.25);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      width: 100%;
+    }
+    #reader-highlight-panel button:hover {
+      filter: brightness(0.98);
+    }
+    #reader-highlight-panel button:focus-visible {
+      outline: 2px solid var(--purple);
+      outline-offset: 2px;
+    }
+    #reader-highlight-panel .reader-highlight-hint {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
@@ -275,6 +327,9 @@
   <main class="page-content">
     {{ content }}
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/web-highlighter@0.7.4/dist/web-highlighter.min.js" defer crossorigin></script>
+  <script src="{{ '/assets/js/reader-highlights-store.js' | relative_url }}" defer></script>
 
 </body>
 </html>
