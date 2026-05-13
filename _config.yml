@@ -13,6 +13,7 @@ baseurl: "/agentic-ai-book"
 markdown: kramdown
 highlighter: rouge
 kramdown:
+  # Kramdown’s mathjax engine emits \[...\] / \(...\) in HTML — KaTeX in _layouts/default.html is configured to parse those plus $$/$.
   math_engine: mathjax
   syntax_highlighter: rouge
 
