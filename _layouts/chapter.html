@@ -1,0 +1,27 @@
+---
+layout: default
+---
+
+<article>
+
+<div style="font-family: var(--font-ui); font-size: 13px; color: var(--purple); margin-bottom: 0.6rem;">
+  {{ page.part }}
+</div>
+
+{{ content }}
+
+<div class="chapter-footer">
+  {% if page.prev %}
+    <a href="{{ page.prev | relative_url }}">← Previous: {{ page.prev_title }}</a>
+  {% else %}
+    <span></span>
+  {% endif %}
+
+  {% if page.next %}
+    <a href="{{ page.next | relative_url }}">Next: {{ page.next_title }} →</a>
+  {% else %}
+    <span></span>
+  {% endif %}
+</div>
+
+</article>

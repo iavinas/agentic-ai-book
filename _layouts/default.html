@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title | default: site.title }}</title>
+
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false}
+      ]
+    })"></script>
+
+  <!-- Mermaid for diagrams -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+
+  <style>
+    :root {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --border: #E5E3DC;
+      --text-1: #1A1A18;
+      --text-2: #5C5B56;
+      --text-3: #9C9A94;
+      --purple: #534AB7;
+      --purple-light: #EEEDFE;
+      --teal: #0F6E56;
+      --teal-light: #E1F5EE;
+      --coral: #993C1D;
+      --coral-light: #FAECE7;
+      --amber: #854F0B;
+      --amber-light: #FAEEDA;
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --font-body: 'Georgia', 'Times New Roman', serif;
+      --font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      --content-width: 780px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+
+    /* Layout */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      font-family: var(--font-ui);
+      font-size: 14px;
+    }
+    .site-header a {
+      color: var(--text-2);
+      text-decoration: none;
+    }
+    .site-header a:hover { color: var(--purple); }
+    .site-title { font-weight: 600; color: var(--text-1); }
+
+    .page-content {
+      max-width: var(--content-width);
+      margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+    }
+
+    /* Typography */
+    h1 {
+      font-family: var(--font-ui);
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+    h2 {
+      font-family: var(--font-ui);
+      font-size: 1.55rem;
+      font-weight: 600;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-family: var(--font-ui);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 0.6rem;
+    }
+    h4 {
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-top: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+
+    p { margin-bottom: 1.4rem; }
+    strong { font-weight: 700; }
+    em { font-style: italic; }
+    a { color: var(--purple); text-decoration: underline; text-decoration-color: rgba(83,74,183,0.3); }
+    a:hover { color: var(--text-1); }
+
+    /* Lead paragraph */
+    blockquote > p:first-child {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: var(--text-2);
+      max-width: 660px;
+    }
+
+    /* Code */
+    pre {
+      margin: 1.5rem 0;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 1rem 1.2rem;
+    }
+    pre code {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      background: none;
+      padding: 0;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      background: var(--bg);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.8rem 0;
+      font-family: var(--font-ui);
+      font-size: 14px;
+    }
+    th {
+      background: #F1EFE8;
+      color: var(--text-1);
+      font-weight: 600;
+      text-align: left;
+      padding: 0.6rem 0.9rem;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-2);
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* Lists */
+    ul, ol { padding-left: 1.5rem; margin-bottom: 1.4rem; }
+    li { margin-bottom: 0.3rem; line-height: 1.65; }
+
+    /* Blockquotes / Callouts */
+    blockquote {
+      margin: 2rem 0;
+      padding: 1.1rem 1.4rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--purple);
+      background: var(--purple-light);
+    }
+    blockquote p:last-child { margin-bottom: 0; }
+
+    /* Mermaid diagrams */
+    .mermaid {
+      margin: 2rem 0;
+      text-align: center;
+    }
+
+    /* ASCII art blocks */
+    pre:has(code.language-text), pre:has(code.language-ascii) {
+      background: var(--surface);
+      color: var(--text-1);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* Footer nav */
+    .chapter-footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-ui);
+      font-size: 14px;
+    }
+    .chapter-footer a {
+      color: var(--text-2);
+      text-decoration: none;
+    }
+    .chapter-footer a:hover { color: var(--purple); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .page-content { padding: 1.5rem 1rem 4rem; }
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a href="{{ '/' | relative_url }}" class="site-title">Agentic AI</a>
+    <span style="color: var(--text-3); margin-left: 1rem;">Building, Training, and Deploying Autonomous Systems</span>
+  </header>
+
+  <main class="page-content">
+    {{ content }}
+  </main>
+
+</body>
+</html>

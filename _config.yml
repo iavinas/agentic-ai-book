@@ -1,0 +1,58 @@
+# Jekyll configuration for GitHub Pages
+title: "Agentic AI"
+subtitle: "Building, Training, and Deploying Autonomous Systems"
+description: >
+  A comprehensive hands-on technical book covering autonomous AI agents
+  from first principles through production deployment as of 2025–2026.
+  Pure Python. Zero frameworks. 68 chapters. 12+ projects.
+
+url: "https://yourusername.github.io"
+baseurl: "/agentic-ai-book"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
+
+# Exclude files from processing
+exclude:
+  - CLAUDE.md
+  - agentic-ai-toc.md
+  - agentic-ai-references/
+  - README.md
+  - LICENSE
+  - Gemfile
+  - Gemfile.lock
+
+# Collections (optional — treats chapters as a collection)
+collections:
+  chapters:
+    output: true
+    permalink: /:name/
+
+# Defaults for layout
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "chapters"
+      type: "pages"
+    values:
+      layout: "chapter"
+
+# Theme (GitHub Pages compatible)
+# Uncomment one of the following lines to use a built-in theme:
+# theme: minima
+# remote_theme: pages-themes/cayman@v0.2.0
+# remote_theme: just-the-docs/just-the-docs
+
+# Plugins (GitHub Pages supported)
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
