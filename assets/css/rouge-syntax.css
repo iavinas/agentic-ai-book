@@ -1,0 +1,84 @@
+/**
+ * Rouge / Pygments token colors for Jekyll fenced code blocks.
+ * Scoped to .highlighter-rouge so inline `code` and prose stay unchanged.
+ * Palette aligns loosely with book tokens (--purple, --teal, --coral, --blue, --amber).
+ */
+.highlighter-rouge .highlight,
+.highlighter-rouge pre.highlight {
+  background: transparent;
+}
+
+.highlighter-rouge code .bp { color: #185FA5; } /* Name.Builtin.Pseudo — self etc. */
+
+.highlighter-rouge code .k,
+.highlighter-rouge code .kc,
+.highlighter-rouge code .kd,
+.highlighter-rouge code .kn,
+.highlighter-rouge code .kp,
+.highlighter-rouge code .kr { color: #534AB7; font-weight: 600; }
+
+.highlighter-rouge code .o,
+.highlighter-rouge code .ow { color: #993C1D; }
+
+.highlighter-rouge code .n,
+.highlighter-rouge code .na,
+.highlighter-rouge code .nb,
+.highlighter-rouge code .bp,
+.highlighter-rouge code .nl,
+.highlighter-rouge code .nn,
+.highlighter-rouge code .nx,
+.highlighter-rouge code .py { color: #1A1A18; }
+
+.highlighter-rouge code .nc,
+.highlighter-rouge code .ne,
+.highlighter-rouge code .nf,
+.highlighter-rouge code .fm { color: #0F6E56; font-weight: 600; }
+
+.highlighter-rouge code .nd,
+.highlighter-rouge code .ni,
+.highlighter-rouge code .nt { color: #185FA5; }
+
+.highlighter-rouge code .s,
+.highlighter-rouge code .sa,
+.highlighter-rouge code .sb,
+.highlighter-rouge code .sc,
+.highlighter-rouge code .dl,
+.highlighter-rouge code .sd,
+.highlighter-rouge code .s2,
+.highlighter-rouge code .se,
+.highlighter-rouge code .sh,
+.highlighter-rouge code .si,
+.highlighter-rouge code .sx,
+.highlighter-rouge code .sr,
+.highlighter-rouge code .s1,
+.highlighter-rouge code .ss { color: #0b5d4a; }
+
+.highlighter-rouge code .m,
+.highlighter-rouge code .mb,
+.highlighter-rouge code .mf,
+.highlighter-rouge code .mh,
+.highlighter-rouge code .mi,
+.highlighter-rouge code .mo,
+.highlighter-rouge code .il { color: #854F0B; }
+
+.highlighter-rouge code .c,
+.highlighter-rouge code .ch,
+.highlighter-rouge code .cm,
+.highlighter-rouge code .cp,
+.highlighter-rouge code .cpf,
+.highlighter-rouge code .c1,
+.highlighter-rouge code .cs {
+  color: #7a786f;
+  font-style: italic;
+}
+
+.highlighter-rouge code .err { color: #993C1D; font-weight: 600; background: transparent; }
+
+.highlighter-rouge code .gd { color: #993C1D; background: rgba(153, 60, 29, 0.08); }
+.highlighter-rouge code .gi { color: #0F6E56; background: rgba(15, 110, 86, 0.08); }
+.highlighter-rouge code .gh,
+.highlighter-rouge code .gu { font-weight: 600; color: var(--text-2); }
+.highlighter-rouge code .go { color: #9c9a94; }
+.highlighter-rouge code .gp { color: #5c5b56; }
+
+.highlighter-rouge code .hll { background: rgba(250, 238, 218, 0.6); display: inline; padding: 0 0.1em; border-radius: 2px; }
