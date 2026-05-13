@@ -82,14 +82,17 @@ layout: chapter
 chapter: NN
 title: "Full Chapter Title"
 part: "Part Name"
-prev: ../chNN-1/
+# prev/next MUST be root-relative (see below)—never ../chNN/ (broken on /.html URLs).
+prev: /chapters/chNN-1.html       # Chapter 1 only: prev: /  (home / table of contents)
 prev_title: "Previous Chapter Title"
-next: ../chNN+1/
+next: /chapters/chNN+1.html
 next_title: "Next Chapter Title"
 ---
 ```
 
-The `index.md` table of contents will also need its link updated to `[Chapter NN](chapters/chNN/)` when the chapter is complete.
+Jekyll emits chapter pages at `/chapters/chNN.html`. A sibling link like `../ch02/` resolves from that file URL to `/ch02/` (wrong). Use `/chapters/chNN.html` so `relative_url` prepends `baseurl` correctly.
+
+The `index.md` table of contents will also need its link updated to `[Chapter NN](chapters/chNN.md)` source path or a site path consistent with publishing when the chapter is complete.
 ---
 
 ## 3. Markdown Chapter Template
@@ -102,9 +105,9 @@ layout: chapter
 chapter: NN
 title: "Full Chapter Title"
 part: "Part Name"
-prev: ../chNN-1/
+prev: /chapters/chNN-1.html
 prev_title: "Previous Chapter Title"
-next: ../chNN+1/
+next: /chapters/chNN+1.html
 next_title: "Next Chapter Title"
 ---
 
@@ -207,27 +210,29 @@ Follow the same rules as the Transformer Book:
 
 ## 5. Code Blocks — LEARNING BY DOING
 
-This is a **learn-by-doing** book. Every chapter must include PyTorch code that the reader can study, modify, and run.
+This is a **learn-by-doing** book. Every chapter must include code that the reader can study, modify, and run.
 
 ### Mandatory rules for code:
 
-1. **Use pure PyTorch for all model code.** Every layer, attention mechanism, training loop, and forward pass must be written with `torch` and `torch.nn`. Never use high-level wrappers like `transformers.AutoModel` or `transformers.Trainer`.
+1. **Use pure Python for conceptual illustrations in introductory chapters (Ch 1–3).** Motivational and intuition-building chapters should use plain Python or pseudocode. Framework-specific model code (`torch.nn`, `nn.TransformerEncoder`, etc.) should appear only after the reader is invested in the topic. Project chapters and architecture chapters must use pure PyTorch for all model code.
 
-2. **HuggingFace `datasets` is allowed for data loading only.** When a code example needs real data, use `from datasets import load_dataset`. Never use HuggingFace for the model itself.
+2. **Use pure PyTorch for all model code in project and architecture chapters.** Every layer, attention mechanism, training loop, and forward pass must be written with `torch` and `torch.nn`. Never use high-level wrappers like `transformers.AutoModel` or `transformers.Trainer`.
 
-3. **Minimum code examples per chapter:**
+3. **HuggingFace `datasets` is allowed for data loading only.** When a code example needs real data, use `from datasets import load_dataset`. Never use HuggingFace for the model itself.
+
+4. **Minimum code examples per chapter:**
    - Part I (Foundations): 2-3 code blocks
    - Part II (Single-Agent): 2-4 code blocks
    - Part III-VIII: 2-3 code blocks
    - Project chapters: 5-8 code blocks
 
-4. **What to show in code:**
+5. **What to show in code:**
    - The core mechanism of the chapter
    - A training or fine-tuning loop when applicable
    - Inference / generation when applicable
    - Dimension comments on key tensors: `# (batch, seq_len, d_model)`
 
-5. **Code style:**
+6. **Code style:**
    - Keep snippets to 20-40 lines
    - Add inline comments explaining non-obvious lines
    - Use descriptive variable names matching the math notation
@@ -268,11 +273,11 @@ Every abstract concept must have a visual. Diagrams must be self-contained withi
 
 | Concept type | Diagram type | Tool |
 |---|---|---|
-| "How does X work?" | ASCII art or Mermaid flowchart | Native markdown |
+| "How does X work?" | Mermaid flowchart | Native markdown |
 | "What is the architecture?" | Mermaid graph or SVG | Mermaid/SVG |
 | "What are the steps?" | Mermaid flowchart | Mermaid |
 | "How do things compare?" | Markdown table or Mermaid | Native |
-| "Show me the math visually" | ASCII matrices or SVG | ASCII/SVG |
+| "Show me the math visually" | SVG or KaTeX | SVG/KaTeX |
 
 ### Mermaid diagrams
 
@@ -289,34 +294,6 @@ flowchart TD
     F --> B
     D --> G[Return Answer]
     F --> G
-```
-```
-
-### ASCII diagrams
-
-For simple structural diagrams, use ASCII art with code fences:
-
-```markdown
-```text
-┌─────────────────┐
-│   LLM Backend   │
-│  (Reasoning)    │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
-┌────────┐ ┌────────┐
-│  Tool  │ │  Tool  │
-│    A   │ │    B   │
-└────┬───┘ └────┬───┘
-     └──────────┘
-          │
-    ┌─────┴─────┐
-    ▼           ▼
-┌────────┐  ┌────────┐
-│  Obs.  │  │  Obs.  │
-│    1   │  │    2   │
-└────────┘  └────────┘
 ```
 ```
 
@@ -445,7 +422,7 @@ The `> **Lead paragraph.**` is the most important paragraph. Rules:
 - Never reuse diagram IDs or function names from another chapter.
 - Never save the file anywhere other than `chapters/chNN.md`.
 - Never use HuggingFace `transformers` for model code — always pure PyTorch (`torch.nn`).
-- Never write a chapter without at least 2 PyTorch code examples.
+- Never write a chapter without at least 2 Python code examples (PyTorch for project/architecture chapters; plain Python for introductory chapters).
 - Never use `\cdot` for matrix multiplication — use juxtaposition.
 - Never use bare juxtaposition or `*` for element-wise products — always use `\odot`.
 - Never use `q \cdot k` for dot products — always use `q^\top k`.
@@ -464,7 +441,7 @@ Before saving the file, verify every item:
 - [ ] No `<text>` element in SVG is missing `font-family`, `font-size`, or `fill`
 - [ ] No SVG element outside the 20-780 safe zone
 - [ ] All KaTeX math is wrapped in `$...$` or `$$...$$`
-- [ ] Minimum code example count met (2+ per chapter, pure PyTorch)
+- [ ] Minimum code example count met (2+ per chapter, pure Python; PyTorch for project/architecture chapters)
 - [ ] Code blocks have shape comments on key tensors and 1-sentence prose lead-ins
 - [ ] Multiplication notation is consistent (juxtaposition, `\odot`, `^\top`)
 - [ ] Every multiplication type has at least one parenthetical annotation
