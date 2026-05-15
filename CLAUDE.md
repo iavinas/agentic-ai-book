@@ -214,7 +214,7 @@ This is a **learn-by-doing** book. Every chapter must include code that the read
 
 ### Mandatory rules for code:
 
-1. **Use pure Python for conceptual illustrations in introductory chapters (Ch 1–3).** Motivational and intuition-building chapters should use plain Python or pseudocode. Framework-specific model code (`torch.nn`, `nn.TransformerEncoder`, etc.) should appear only after the reader is invested in the topic. Project chapters and architecture chapters must use pure PyTorch for all model code.
+1. **Use pure Python for Ch 1–2; PyTorch is welcome in Ch 3 for vector/tensor primitives.** Chapter 1 (Why Agents?) and Chapter 2 (The Agent Loop) are motivational — keep them to plain Python or pseudocode. Chapter 3 (LLM Primitives) covers embeddings, similarity search, and logits masking; PyTorch makes these concepts concrete and is encouraged. Project chapters and architecture chapters must use pure PyTorch for all model code.
 
 2. **Use pure PyTorch for all model code in project and architecture chapters.** Every layer, attention mechanism, training loop, and forward pass must be written with `torch` and `torch.nn`. Never use high-level wrappers like `transformers.AutoModel` or `transformers.Trainer`.
 
@@ -422,7 +422,7 @@ The `> **Lead paragraph.**` is the most important paragraph. Rules:
 - Never reuse diagram IDs or function names from another chapter.
 - Never save the file anywhere other than `chapters/chNN.md`.
 - Never use HuggingFace `transformers` for model code — always pure PyTorch (`torch.nn`).
-- Never write a chapter without at least 2 Python code examples (PyTorch for project/architecture chapters; plain Python for introductory chapters).
+- Never write a chapter without at least 2 Python code examples (PyTorch for project/architecture chapters and Ch 3; plain Python for Ch 1–2).
 - Never use `\cdot` for matrix multiplication — use juxtaposition.
 - Never use bare juxtaposition or `*` for element-wise products — always use `\odot`.
 - Never use `q \cdot k` for dot products — always use `q^\top k`.
