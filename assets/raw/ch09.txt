@@ -25,8 +25,6 @@ Chain-of-Thought prompting, as we saw in Chapter 8, gives a language model a scr
 
 The conceptual shift is subtle but profound. In CoT, the LLM is a reasoner. In ToT, the LLM is a **state generator**: its job is to propose possible next states in a search space. A separate component — the **evaluator** — judges the promise of each state. The search algorithm (BFS, DFS, or beam search) orchestrates the two. This decoupling mirrors how classical AI planners work: a generator proposes actions, a heuristic evaluates states, and A* or MCTS navigates the space.
 
-<figure>
-
 ```mermaid
 flowchart LR
     subgraph CoT["Chain-of-Thought (Linear)"]
@@ -46,8 +44,9 @@ flowchart LR
     style ToT fill:#0F6E56,color:#fff
 ```
 
-<figcaption>Figure 9.1 — CoT commits to a single linear scratchpad. ToT generates a branching tree of candidate intermediate steps and searches over them.</figcaption>
-</figure>
+
+*Figure 9.1 — CoT commits to a single linear scratchpad. ToT generates a branching tree of candidate intermediate steps and searches over them.*
+
 
 ### 1.2 BFS and DFS over thought space
 
@@ -58,8 +57,6 @@ In **BFS–ToT**, the agent expands every node at the current depth before movin
 In **DFS–ToT**, the agent picks the most promising child of the current node, dives deep, and either reaches a solution or hits a dead end. When it hits a dead end, it backtracks to the most recent unexplored sibling and tries again. DFS is aggressive: it produces complete candidate solutions quickly, which is useful when the problem requires a full sequence to be evaluated (e.g., a proof or a plan). Its weakness is myopia — if the evaluator overestimates an early node, the agent can waste significant compute exploring a doomed subtree.
 
 In practice, most modern implementations use a hybrid: beam search for the first few levels to keep diversity, then DFS-style depth bias for promising subtrees. The choice between BFS and DFS is a trade-off between parallelism (BFS generates many candidates at once, which can be batched) and depth (DFS minimizes context-window usage by focusing on one thread at a time).
-
-<figure>
 
 ```mermaid
 flowchart TD
@@ -81,8 +78,9 @@ flowchart TD
     style DFS fill:#854F0B,color:#fff
 ```
 
-<figcaption>Figure 9.2 — BFS explores all candidates at a given depth before deepening. DFS commits to one line of reasoning and backtracks only when it fails.</figcaption>
-</figure>
+
+*Figure 9.2 — BFS explores all candidates at a given depth before deepening. DFS commits to one line of reasoning and backtracks only when it fails.*
+
 
 ### 1.3 State evaluation: scoring intermediate thoughts for promise
 
@@ -124,8 +122,6 @@ The final answer is produced by a **Consensus-Guided Expert Decision (CGED)** mo
 
 FoT’s results are striking. On Game of 24, FoT with eight activated subtrees achieves **96.84%** success, crushing standard ToT (74.00%) and even MCTS-based variants. On GSM8K with QwQ-32B, FoT(n=4) reaches **97.33%** accuracy. The scaling law is consistent: more active trees, higher accuracy, with sparse activation preventing the cost from exploding linearly.
 
-<figure>
-
 ```mermaid
 flowchart TD
     Root["Problem"] --> T1["Tree 1 (algebraic)"]
@@ -141,16 +137,15 @@ flowchart TD
     style A2 fill:#993C1D,color:#fff
 ```
 
-<figcaption>Figure 9.3 — Forest-of-Thought runs parallel reasoning trees, deactivating low-confidence ones early and resolving the remainder via consensus.</figcaption>
-</figure>
+
+*Figure 9.3 — Forest-of-Thought runs parallel reasoning trees, deactivating low-confidence ones early and resolving the remainder via consensus.*
+
 
 ### 2.2 Adaptive Graph of Thoughts (AGoT)
 
 **Adaptive Graph of Thoughts (AGoT)**, from Pandey et al. (February 2025), pushes the structure further: instead of a fixed tree or forest, it builds a **dynamic Directed Acyclic Graph (DAG)** of reasoning steps. When AGoT encounters a complex subproblem, it spawns a *nested subgraph* dedicated to that subproblem. When the subproblem is solved, the subgraph collapses into a single node in the parent graph. This recursive decomposition unifies CoT, ToT, and GoT in a single framework.
 
 The adaptivity comes from a complexity gate. At each step, AGoT asks: *is the current thought sufficient, or does it need deeper analysis?* If the self-assessment score is high, the node is marked complete. If low, the node is expanded into a subgraph. This means easy subproblems get a single CoT step, hard subproblems get a full ToT search, and related subproblems get merged via GoT-style aggregation. The result is **+46.2% on GPQA** without any training or fine-tuning — gains typically reserved for expensive RL distillation approaches like DeepSeek-R1.
-
-<figure>
 
 ```mermaid
 flowchart TD
@@ -165,8 +160,9 @@ flowchart TD
     style Ans fill:#0F6E56,color:#fff
 ```
 
-<figcaption>Figure 9.4 — AGoT dynamically decomposes a query into nested subgraphs. Subproblems that need deeper analysis spawn their own local reasoning DAGs.</figcaption>
-</figure>
+
+*Figure 9.4 — AGoT dynamically decomposes a query into nested subgraphs. Subproblems that need deeper analysis spawn their own local reasoning DAGs.*
+
 
 ### 2.3 Constrained MCTS (CMCTS)
 
@@ -183,8 +179,6 @@ Standard MCTS applied to LLM reasoning suffers from two pathologies. First, the 
 
 The results are remarkable: a **7B-parameter model** with CMCTS achieves **83.4%** average accuracy across math benchmarks, surpassing a **72B-parameter CoT baseline by 4.8%** in zero-shot settings. The ablation studies confirm that diversity without guidance is insufficient — removing the PRM drops performance by up to 8.1%.
 
-<figure>
-
 ```mermaid
 flowchart LR
     U["Understand<br/>(decompose)"] --> R["Reflect<br/>(validate)"]
@@ -198,8 +192,9 @@ flowchart LR
     style S fill:#534AB7,color:#fff
 ```
 
-<figcaption>Figure 9.5 — CMCTS constrains the MCTS action space to four disjoint reasoning modes, with partial-order rules preventing redundant sequences.</figcaption>
-</figure>
+
+*Figure 9.5 — CMCTS constrains the MCTS action space to four disjoint reasoning modes, with partial-order rules preventing redundant sequences.*
+
 
 ### 2.4 Dynamic Parallel Tree Search (DPTS)
 
@@ -237,8 +232,6 @@ Revision is the second GoT primitive. In a tree, if a thought is flawed, the onl
 
 This is especially useful in domains where feedback arrives asynchronously. A coding agent might generate a plan, begin implementation, and then discover that step 3 of the plan is infeasible because a library API changed. Rather than restarting from scratch, the agent revises step 3 and propagates the change to its children. The graph structure makes this local update possible; a tree would require discarding all code written after step 3.
 
-<figure>
-
 ```mermaid
 flowchart TD
     subgraph Aggregation["Aggregation"]
@@ -256,8 +249,9 @@ flowchart TD
     style X fill:#993C1D,color:#fff
 ```
 
-<figcaption>Figure 9.6 — GoT aggregation merges insights from parallel branches. GoT revision edits a node in place, preserving its descendants rather than pruning the entire subtree.</figcaption>
-</figure>
+
+*Figure 9.6 — GoT aggregation merges insights from parallel branches. GoT revision edits a node in place, preserving its descendants rather than pruning the entire subtree.*
+
 
 ### 3.4 When to use ToT vs GoT vs simple CoT: a decision framework
 

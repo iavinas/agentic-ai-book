@@ -41,8 +41,6 @@ However, in-context learning has sharp limits. The model may hallucinate paramet
 >
 > Pre-training gives the model *knowledge of the world*. Fine-tuning gives it *knowledge of action*. In-context learning bridges the gap for simple tasks but cannot reliably handle complexity. The three together form a hierarchy: pre-training for competence, fine-tuning for specialization, prompting for adaptability.
 
-<figure>
-
 ```mermaid
 flowchart LR
     subgraph Pre["Pre-training"]
@@ -67,8 +65,9 @@ flowchart LR
     style Prompt fill:#185FA5,color:#fff
 ```
 
-<figcaption>Figure 7.1 — The three layers of agent capability. Pre-training builds general competence. Fine-tuning specializes toward action. In-context learning enables rapid adaptation to new tools.</figcaption>
-</figure>
+
+*Figure 7.1 — The three layers of agent capability. Pre-training builds general competence. Fine-tuning specializes toward action. In-context learning enables rapid adaptation to new tools.*
+
 
 ---
 
@@ -88,8 +87,6 @@ Two landmark projects established the blueprint for tool-use fine-tuning.
 
 **ToolLLM** (Qin et al., 2023) scaled this approach to 16,464 real-world RESTful APIs from RapidAPI Hub, spanning 49 categories from finance to social media. ToolLLM introduced **ToolBench**, an instruction-tuning dataset containing both single-tool and multi-tool scenarios, and **DFSDT** (Depth-First Search-based Decision Tree), a reasoning algorithm that improved planning over standard ReAct. ToolLLaMA, the fine-tuned LLaMA-2 7B, showed strong zero-shot generalization: despite never being trained on ML APIs, it matched Gorilla's performance on APIBench.
 
-<figure>
-
 | Aspect | Gorilla | ToolLLM |
 |--------|---------|---------|
 | Base model | LLaMA 7B | LLaMA-2 7B |
@@ -98,8 +95,9 @@ Two landmark projects established the blueprint for tool-use fine-tuning.
 | Multi-tool chaining | Limited | Supported |
 | OOD generalization | Good on ML APIs | Strong across domains |
 
-<figcaption>Table 7.1 — Gorilla vs. ToolLLM. Gorilla specialized in ML APIs with retriever-aware training. ToolLLM scaled to general REST APIs with explicit reasoning.</figcaption>
-</figure>
+
+*Table 7.1 — Gorilla vs. ToolLLM. Gorilla specialized in ML APIs with retriever-aware training. ToolLLM scaled to general REST APIs with explicit reasoning.*
+
 
 ### Training data construction: trajectories as training examples
 
@@ -134,9 +132,9 @@ def format_trajectory_for_training(trajectory):
         content = turn["content"]
         seg_type = turn.get("type", "")
 
-        # Mark assistant-generated thoughts and actions for learning.
+        # Mark assistant-generated thoughts, actions, and final answers for learning.
         # Mask user queries, tool observations, and system prompts.
-        if role == "assistant" and seg_type in ("thought", "action"):
+        if role == "assistant" and seg_type in ("thought", "action", "final_answer"):
             label = 1   # Learn from this
         else:
             label = 0   # Do not learn from this
@@ -164,6 +162,22 @@ training_examples = format_trajectory_for_training(trace)
 for ex in training_examples:
     marker = "LEARN" if ex["label"] else "MASK"
     print(f"[{marker}] {ex['text']}")
+
+# Verify masking logic: thoughts, actions, and final answers are learnable;
+# system prompts, user queries, and tool observations are masked.
+labels_by_type = {ex["type"]: ex["label"] for ex in training_examples}
+assert labels_by_type["system"] == 0, "System prompts must be masked"
+assert labels_by_type["query"] == 0,   "User queries must be masked"
+assert labels_by_type["thought"] == 1,  "Assistant thoughts must be learned"
+assert labels_by_type["action"] == 1,   "Assistant actions must be learned"
+assert labels_by_type["observation"] == 0, "Tool observations must be masked"
+assert labels_by_type["final_answer"] == 1, "Final answers must be learned"
+
+# Verify only assistant-generated content is learned.
+learn_count = sum(1 for ex in training_examples if ex["label"] == 1)
+mask_count  = sum(1 for ex in training_examples if ex["label"] == 0)
+assert learn_count == 4, f"Expected 4 learnable turns, got {learn_count}"
+assert mask_count == 3,  f"Expected 3 masked turns, got {mask_count}"
 ```
 
 Running this produces:
@@ -235,8 +249,6 @@ The agent community has converged on several standard data formats for fine-tuni
 
 **ToolBench** (from the ToolLLM project) uses a custom format optimized for multi-tool scenarios. Each training example includes a task description, a list of available tools with JSON schemas, a reasoning trace, and the final answer. The format is richer but more complex — it encodes tool schemas inline rather than referencing them externally.
 
-<figure>
-
 ```mermaid
 flowchart TD
     A["Raw agent trajectories"] --> B["ShareGPT format<br/>(simple, universal)"]
@@ -247,8 +259,9 @@ flowchart TD
     D --> G["Multi-tool scenario training"]
 ```
 
-<figcaption>Figure 7.2 — Data format pipeline. Raw trajectories are converted into standard formats depending on the training objective.</figcaption>
-</figure>
+
+*Figure 7.2 — Data format pipeline. Raw trajectories are converted into standard formats depending on the training objective.*
+
 
 ### Evaluating fine-tuned tool callers
 
@@ -311,6 +324,10 @@ class ToolCallEvaluator:
 
     def evaluate_batch(self, predictions: List[Dict[str, Any]]) -> Dict[str, float]:
         """Run evaluation over a batch of (query, prediction, gold) examples."""
+        n = len(predictions)
+        if n == 0:
+            return {"syntax_accuracy": 0.0, "tool_accuracy": 0.0, "full_accuracy": 0.0}
+
         syntax_pass = 0
         tool_pass = 0
         full_pass = 0
@@ -376,8 +393,14 @@ predictions = [
 ]
 
 results = evaluator.evaluate_batch(predictions)
-print(results)
-# {'syntax_accuracy': 1.0, 'tool_accuracy': 0.5, 'full_accuracy': 0.5}
+assert results["syntax_accuracy"] == 1.0, f"Expected 1.0, got {results['syntax_accuracy']}"
+assert results["tool_accuracy"] == 0.5, f"Expected 0.5, got {results['tool_accuracy']}"
+assert results["full_accuracy"] == 0.5, f"Expected 0.5, got {results['full_accuracy']}"
+
+# Edge case: empty predictions must not divide by zero.
+assert evaluator.evaluate_batch([]) == {
+    "syntax_accuracy": 0.0, "tool_accuracy": 0.0, "full_accuracy": 0.0
+}
 ```
 
 This evaluator gives us three numbers that tell a nuanced story. A syntax accuracy of 1.0 but tool accuracy of 0.5 means the model knows *how* to call tools but not *which* tool to call. This is common after early-stage fine-tuning: the model has learned the format but not the semantics. A full accuracy of 0.5 tells us that half the time, the model gets both the tool and the arguments exactly right. These metrics guide what to fix next — more training data, better tool descriptions, or harder negative examples.
@@ -394,8 +417,6 @@ Reinforcement learning (RL) breaks this ceiling. Instead of imitating fixed traj
 
 The results have been transformative. OpenAI's o3 and o4-mini, trained with RL, can chain 600+ tool calls in complex reasoning tasks. DeepSeek-R1 emerged pure reflection and verification behaviors from RL alone — no human demonstrated those behaviors; the model invented them because they led to higher reward. This is the frontier: from imitation to invention.
 
-<figure>
-
 ```mermaid
 flowchart LR
     subgraph SFT["Supervised Fine-Tuning"]
@@ -410,8 +431,9 @@ flowchart LR
     style RL fill:#0F6E56,color:#fff
 ```
 
-<figcaption>Figure 7.3 — SFT vs. RL. SFT imitates fixed demonstrations. RL explores and discovers strategies that may exceed training data quality.</figcaption>
-</figure>
+
+*Figure 7.3 — SFT vs. RL. SFT imitates fixed demonstrations. RL explores and discovers strategies that may exceed training data quality.*
+
 
 ### RL for tool use: the reward loop
 
@@ -449,8 +471,6 @@ The biggest bottleneck in agent training is not compute or algorithms — it is 
 
 Both approaches share a crucial insight: **the quality of synthetic data depends on the verifier**. If the verifier that judges success is flawed, the synthetic trajectories contain hidden errors that the model will learn to replicate. A trajectory generator is only as good as its evaluation function.
 
-<figure>
-
 ```mermaid
 flowchart TD
     A["Real trajectories<br/>(expensive, high quality)"] --> D["Training data"]
@@ -464,8 +484,9 @@ flowchart TD
     style C fill:#185FA5,color:#fff
 ```
 
-<figcaption>Figure 7.4 — Synthetic data generation. Real trajectories, STeP distillation, and Simia simulation all feed into the training pipeline. The verifier closes the loop by ensuring quality.</figcaption>
-</figure>
+
+*Figure 7.4 — Synthetic data generation. Real trajectories, STeP distillation, and Simia simulation all feed into the training pipeline. The verifier closes the loop by ensuring quality.*
+
 
 ### The three paradigms of agentic tool use
 
@@ -477,16 +498,15 @@ Research in 2025–2026 has crystallized three distinct paradigms for giving LLM
 
 **Reward-driven tool policy learning** uses RL to optimize tool use strategies dynamically. Cost: high — requires environment simulation, reward engineering, and extensive sampling. Performance: superior for complex multi-step tasks. Reliability: highest for in-distribution tasks; can discover novel strategies. The frontier of agent capability.
 
-<figure>
-
 | Paradigm | Training cost | Performance ceiling | Generalization | Best for |
 |----------|---------------|--------------------|----------------|----------|
 | Prompting | Negligible | Low (1–2 steps) | Good to new tools | Prototyping, simple tasks |
 | Supervised learning | Moderate | Medium (5–10 steps) | Poor OOD | Production agents with fixed tools |
 | Reinforcement learning | High | High (100+ steps) | Moderate | Complex, dynamic tasks requiring strategy |
 
-<figcaption>Table 7.2 — The three paradigms of agentic tool use. Cost and capability scale together. Choose based on task complexity and budget constraints.</figcaption>
-</figure>
+
+*Table 7.2 — The three paradigms of agentic tool use. Cost and capability scale together. Choose based on task complexity and budget constraints.*
+
 
 ---
 
@@ -511,6 +531,10 @@ Research in 2025–2026 has crystallized three distinct paradigms for giving LLM
 - [ToolOmni: Enabling Open-World Tool Use via Agentic Learning with Proactive Retrieval and Grounded Execution](https://arxiv.org/abs/2604.13787) — 2026. Decoupled multi-objective GRPO for open-world tool use.
 - [Scaling Agentic Capabilities, Not Context: Efficient Reinforcement Finetuning for Large Toolspaces](https://arxiv.org/abs/2603.06713) — Microsoft Research, 2026. Rubric-based RFT for MCP environments.
 - [Tool-R0: Zero-Data Self-Play for Tool Learning](https://arxiv.org/abs/2602.21320) — 2026. Co-evolving Generator and Solver for synthetic trajectory generation without human data.
+- [PRIME: Process Reinforcement through Implicit Rewards](https://arxiv.org/abs/2502.01456) — 2025. Derives process rewards implicitly from outcome labels, removing the need for human step annotations.
+- [AgentPRM: Practical Actor-Critic for Multi-Turn Agents](https://arxiv.org/abs/2502.05992) — Cornell + Fudan, 2025. Extends PRMs to multi-turn agent trajectories in an actor-critic framework.
+- [STeP: Self-Training via Planning](https://arxiv.org/abs/2409.20819) — 2024. Strong model generates trajectories as training data for a weaker model via distillation.
+- [Simia: Simulating Environments with Reasoning Models for Agent Training](https://arxiv.org/abs/2511.01824) — Li et al., 2025. LLM-simulated environments for SFT and RL agent training without real APIs.
 - [Agentic Tool Use in Large Language Models](https://arxiv.org/abs/2604.00835) — 2026. Comprehensive survey formalizing the three paradigms of tool use.
 
 ---

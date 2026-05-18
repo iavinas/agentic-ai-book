@@ -57,8 +57,6 @@ There are two ways an agent can "see" a web page. It can read the DOM tree, or i
 
 **Visual agents** feed screenshots into a vision-language model (VLM) such as Claude 3.5 Sonnet or GPT-4o, which predicts click coordinates and typed text directly from pixels. This is the approach behind Anthropic's Computer Use API and the WEBSIGHT agent. Visual agents are robust to DOM changes — a button that moves five pixels is still a button — and they handle canvas, PDFs, and native desktop applications. But they are 2–4× slower per step, roughly 2× more expensive, and probabilistic: the model might misread a coordinate by twenty pixels and click the wrong link.
 
-<figure>
-
 ```mermaid
 flowchart LR
     subgraph DOM["DOM-Based Perception"]
@@ -76,8 +74,9 @@ flowchart LR
     H --> E
 ```
 
-<figcaption>Figure 11.1 — Two perception pathways converge on the same reasoning core. DOM is fast and precise; vision is robust and general.</figcaption>
-</figure>
+
+*Figure 11.1 — Two perception pathways converge on the same reasoning core. DOM is fast and precise; vision is robust and general.*
+
 
 The practical choice is not either-or. In 2026, the consensus architecture is **hybrid**: use the DOM for 80% of interactions — clicks, form fills, navigation — because it is fast and deterministic, and fall back to vision for edge cases: CAPTCHAs, canvas elements, visual verification ("does this chart look correct?"), and sites with unstable selectors.
 
@@ -125,8 +124,6 @@ A clean implementation pattern is the **perception router**:
 
 This pattern is used by the `chromium-screenshots` MCP server and by the WebNavigator architecture, which achieved strong results on WebArena Verified by reframing navigation as retrieval over an "Interaction Graph" built from both DOM structure and rendered screenshots.
 
-<figure>
-
 ```mermaid
 flowchart TD
     A[Step Start] --> B[Snapshot DOM]
@@ -144,8 +141,9 @@ flowchart TD
     J --> A
 ```
 
-<figcaption>Figure 11.2 — Hybrid perception router. DOM is the fast path; vision is the recovery path.</figcaption>
-</figure>
+
+*Figure 11.2 — Hybrid perception router. DOM is the fast path; vision is the recovery path.*
+
 
 ### 2.4 Session Management
 
@@ -217,8 +215,6 @@ OpAgent (Ant Group, February 2026) represents the current state of the art for m
 
 The full framework achieves 71.6% on WebArena. Its single-model variant, a Qwen3-VL-32B-Thinking model trained with online RL in the wild, reaches 38.1% — a 10.7-point improvement over the vanilla model. The RL pipeline uses a hybrid reward: a VLM-based `WebJudge` for outcome evaluation and a rule-based decision tree for step-level progress rewards. This is a practical application of process reward ideas from Chapter 15 to the web domain.
 
-<figure>
-
 ```mermaid
 flowchart LR
     U[User Task] --> P[Planner]
@@ -230,8 +226,9 @@ flowchart LR
     S --> A[Final Answer]
 ```
 
-<figcaption>Figure 11.3 — OpAgent's modular architecture. Each module is specialized and, in the full system, can be backed by a different model.</figcaption>
-</figure>
+
+*Figure 11.3 — OpAgent's modular architecture. Each module is specialized and, in the full system, can be backed by a different model.*
+
 
 ---
 

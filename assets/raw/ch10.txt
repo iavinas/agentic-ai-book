@@ -23,8 +23,6 @@ Program synthesis is an old dream: describe what you want in English, receive wo
 
 The **code interpreter pattern** changed the framing. Instead of generating code in a single forward pass, the model writes a snippet, executes it in a sandbox, observes the output, and iterates. The loop is deceptively simple: generate, execute, observe, refine. But it transforms code generation from prediction into interaction. The agent is no longer guessing the right answer; it is probing the environment and learning from ground-truth feedback.
 
-<figure>
-
 ```mermaid
 flowchart TD
     A[Task Description] --> B[Plan]
@@ -37,8 +35,9 @@ flowchart TD
     H --> C
 ```
 
-<figcaption>Figure 10.1 — The code interpreter loop. The agent treats generation as a hypothesis and test execution as the falsification mechanism.</figcaption>
-</figure>
+
+*Figure 10.1 — The code interpreter loop. The agent treats generation as a hypothesis and test execution as the falsification mechanism.*
+
 
 This loop is why modern code agents outperform their one-shot ancestors by an order of magnitude on real tasks. A model that generates ten candidate functions and picks the one that passes tests is not ten times smarter; it is simply willing to learn from failure.
 
@@ -68,8 +67,6 @@ SWE-bench has three tiers:
 
 **HumanEval** (Chen et al., 2021) remains useful as a lightweight synthetic benchmark — 164 hand-written Python problems with docstrings and tests — but it is not representative of real-world software engineering. HumanEval problems are self-contained, single-function, and lack the contextual noise of a real repository. SWE-bench is the gold standard because it forces the agent to navigate unfamiliar code, understand issue descriptions written by humans for humans, and respect existing conventions.
 
-<figure>
-
 ```mermaid
 flowchart LR
     A[HumanEval] --> B[Synthetic<br/>164 tasks<br/>Single function]
@@ -82,8 +79,9 @@ flowchart LR
     style G fill:#534AB7,stroke:#185FA5,color:#fff
 ```
 
-<figcaption>Figure 10.2 — The benchmark ladder for code agents. Each step adds realism: from isolated functions to full repositories with real issues.</figcaption>
-</figure>
+
+*Figure 10.2 — The benchmark ladder for code agents. Each step adds realism: from isolated functions to full repositories with real issues.*
+
 
 ---
 
@@ -100,8 +98,6 @@ In the **Edit** phase, the agent generates the actual code modification. This is
 In the **Test** phase, the agent runs the test suite (or a targeted subset) and collects structured feedback. The feedback is not a binary pass/fail; it includes traceback text, failed assertion details, and coverage gaps.
 
 In the **Debug** phase, the agent ingests the failure, localizes the likely cause, and generates a revised edit. The loop repeats until success or a budget limit is reached.
-
-<figure>
 
 ```mermaid
 flowchart TD
@@ -128,8 +124,9 @@ flowchart TD
     Debug --> Edit
 ```
 
-<figcaption>Figure 10.3 — The Plan-Edit-Test-Debug loop. Each phase is a checkpoint; skipping Plan leads to undirected thrashing, and skipping Test removes the ground-truth signal.</figcaption>
-</figure>
+
+*Figure 10.3 — The Plan-Edit-Test-Debug loop. Each phase is a checkpoint; skipping Plan leads to undirected thrashing, and skipping Test removes the ground-truth signal.*
+
 
 ARCS (Los Alamos National Laboratory, 2025) formalized this loop as a budgeted synthesize-execute-repair process with provable termination and monotonic improvement guarantees. The agent halts when tests pass or when a fixed iteration budget is exhausted.
 
@@ -194,8 +191,6 @@ The landscape of coding agents shifted dramatically between 2024 and 2026. Three
 
 **OpenHands** (formerly OpenDevin) remains the leading open-source alternative, offering self-hostable sandboxed cloud VMs and a modular agent architecture. It is the reference implementation for researchers who need full control over the agent loop.
 
-<figure>
-
 ```mermaid
 graph LR
     A[Claude Code<br/>Opus 4.7<br/>87.6% Verified] --> B[OpenAI Codex CLI<br/>+ Symphony<br/>500% PR lift]
@@ -207,8 +202,9 @@ graph LR
     style D fill:#854F0B,stroke:#185FA5,color:#fff
 ```
 
-<figcaption>Figure 10.4 — The frontier coding agent landscape in mid-2026. Each system trades off autonomy, precision, cost, and openness differently.</figcaption>
-</figure>
+
+*Figure 10.4 — The frontier coding agent landscape in mid-2026. Each system trades off autonomy, precision, cost, and openness differently.*
+
 
 ### 3.2 Production Deployments
 

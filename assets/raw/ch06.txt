@@ -39,8 +39,6 @@ This chapter follows EDD exactly. The first code we write is not the agent. It i
 
 Our agent has four components, each added only when a test requires it:
 
-<figure>
-
 ```mermaid
 flowchart TB
     subgraph Agent["ReAct Agent"]
@@ -62,8 +60,9 @@ flowchart TB
     style Tool fill:#FFFFFF,stroke:#AFA9EC,stroke-width:1.5px
     style State fill:#FFFFFF,stroke:#AFA9EC,stroke-width:1.5px
 ```
-<figcaption>Figure 6.1: ReAct agent architecture — LLM backend, tool system, and state feed into the ReAct loop.</figcaption>
-</figure>
+
+*Figure 6.1: ReAct agent architecture — LLM backend, tool system, and state feed into the ReAct loop.*
+
 
 The **LLM Backend** is a thin abstraction over API calls. The **Tool System** registers Python functions as callable tools, automatically inferring JSON schemas from type annotations. The **State** holds the scratchpad — the accumulated trace of thoughts, actions, and observations. The **ReAct Loop** ties them together: it builds a prompt from the current state, asks the LLM to think and act, parses the response, executes the tool, and updates the state with the result.
 
@@ -657,8 +656,6 @@ Our prompt template has three sections:
 2. **Scratchpad** — The accumulated trace of thoughts, actions, and observations so far.
 3. **User task** — The original goal.
 
-<figure>
-
 ```mermaid
 flowchart TB
     SP["<b>System prompt</b><br/>Role, tools, output format"]
@@ -666,8 +663,9 @@ flowchart TB
     UT["<b>User task</b><br/>Goal sentence"]
     SP --> SB --> UT
 ```
-<figcaption>Figure 6.2: ReAct prompt structure — system prompt, scratchpad history, and user task.</figcaption>
-</figure>
+
+*Figure 6.2: ReAct prompt structure — system prompt, scratchpad history, and user task.*
+
 
 ```
 System: You are a reasoning agent. You solve tasks by thinking step by step
@@ -959,8 +957,6 @@ assert agent.max_steps == 15
 
 We run the evaluator after every major feature addition. Here is what the progression looks like:
 
-<figure>
-
 ```mermaid
 flowchart TD
     B["<b>Baseline — stub agent</b><br/>0/6 passed | 0%<br/>All tasks FAIL at 1 step"]
@@ -969,8 +965,9 @@ flowchart TD
     R["<b>After ReAct loop</b><br/>6/6 | 100%<br/>Avg steps 2.2 — sequencing completes all tasks"]
     B --> L --> T --> R
 ```
-<figcaption>Figure 6.3: Eval-Driven Development progression — each component is justified by a measurable score improvement.</figcaption>
-</figure>
+
+*Figure 6.3: Eval-Driven Development progression — each component is justified by a measurable score improvement.*
+
 
 ```
 === Baseline (Stub Agent) ===
@@ -1035,8 +1032,6 @@ for r in metrics["details"]:
 
 Running the agent on Task 5 produces a trace like this (with an OpenAI backend):
 
-<figure>
-
 ```mermaid
 sequenceDiagram
     participant Agent
@@ -1053,8 +1048,9 @@ sequenceDiagram
 
     Note over Agent: Step 3 — FinalAnswer with summary
 ```
-<figcaption>Figure 6.4: Task 5 execution trace — the agent decomposes a multi-step task into calculate, write, and confirm.</figcaption>
-</figure>
+
+*Figure 6.4: Task 5 execution trace — the agent decomposes a multi-step task into calculate, write, and confirm.*
+
 
 ```
 [Step 1] Thought: I need to calculate the area of a circle with radius 7.

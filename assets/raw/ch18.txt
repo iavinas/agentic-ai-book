@@ -56,8 +56,6 @@ This is the language of STRIPS planning, and HTN inherits it. The precondition i
 
 For LLM agents, preconditions and effects need not be symbolic formulas. They can be natural language descriptions validated by an LLM or a lightweight classifier. The principle remains the same: before executing a subgoal, check whether the world is ready; after executing, update the world model.
 
-<figure>
-
 <svg width="100%" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
   <rect x="0" y="0" width="800" height="420" fill="#FAFAFA"/>
@@ -122,8 +120,9 @@ For LLM agents, preconditions and effects need not be symbolic formulas. They ca
   <text x="620" y="230" font-family="sans-serif" font-size="11" fill="#666" text-anchor="middle">Decompose on demand, localize failures</text>
 </svg>
 
-<figcaption>Figure 18.1 — Flat planning treats every action as an atom in a long chain, making recovery impossible. Hierarchical planning decomposes goals into subgoals, expanding detail only where needed and isolating failures to specific branches.</figcaption>
-</figure>
+
+*Figure 18.1 — Flat planning treats every action as an atom in a long chain, making recovery impossible. Hierarchical planning decomposes goals into subgoals, expanding detail only where needed and isolating failures to specific branches.*
+
 
 ### 1.4 Forward Decomposition and Backtracking
 
@@ -329,8 +328,6 @@ Running this script prints `['pick_up_a', 'stack_a_on_b']`. The planner selected
 >
 > HTN's power comes from the method library. A well-curated library encodes domain expertise: chefs know how to make coffee; travel agents know how to book flights. When the LLM generates methods on the fly, it is doing approximate HTN planning with a learned rather than hand-coded library.
 
-<figure>
-
 <svg width="100%" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
   <rect x="0" y="0" width="700" height="380" fill="#FAFAFA"/>
   
@@ -406,8 +403,9 @@ Running this script prints `['pick_up_a', 'stack_a_on_b']`. The planner selected
   <text x="350" y="350" font-family="sans-serif" font-size="12" fill="#666" text-anchor="middle">The tree depth is bounded by the domain; breadth depends on task complexity.</text>
 </svg>
 
-<figcaption>Figure 18.2 — HTN decomposition tree for "plan a trip to Tokyo." The root compound task expands into four subgoals, each of which expands into concrete primitives. The planner only materializes branches that are actually needed.</figcaption>
-</figure>
+
+*Figure 18.2 — HTN decomposition tree for "plan a trip to Tokyo." The root compound task expands into four subgoals, each of which expands into concrete primitives. The planner only materializes branches that are actually needed.*
+
 
 ---
 
@@ -428,8 +426,6 @@ $$\text{score}(a) = P_{\text{LLM}}(a \mid \text{task}, \text{history}) \cdot P_{
 The first term is the LLM's probability that action $a$ is a useful next step. The second term is the robot's estimate that $a$ is executable. The product grounds the linguistic plan in physical reality. If the LLM proposes "pick up the apple" but the affordance model reports near-zero probability because the apple is out of reach, the action is rejected and the LLM is asked to propose an alternative — perhaps "open the drawer to get the tongs."
 
 SayCan can be viewed as an HTN system in which the method library is the LLM's parametric knowledge and the precondition check is the affordance value function. The compound tasks are natural language instructions; the primitives are robot skills (pick, place, push, navigate). The decomposition is generated online rather than retrieved from a fixed library.
-
-<figure>
 
 <svg width="100%" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
   <rect x="0" y="0" width="700" height="300" fill="#FAFAFA"/>
@@ -469,8 +465,9 @@ SayCan can be viewed as an HTN system in which the method library is the LLM's p
   <text x="460" y="260" font-family="sans-serif" font-size="10" fill="#666" text-anchor="middle">Execution result feeds back to state</text>
 </svg>
 
-<figcaption>Figure 18.3 — SayCan architecture. The LLM proposes a high-level action sequence; the affordance model filters out physically impossible actions; the product scores are ranked and sent to the robot. Execution feedback updates the state for the next step.</figcaption>
-</figure>
+
+*Figure 18.3 — SayCan architecture. The LLM proposes a high-level action sequence; the affordance model filters out physically impossible actions; the product scores are ranked and sent to the robot. Execution feedback updates the state for the next step.*
+
 
 ### 2.2 Inner Monologue: Implicit Hierarchy Through Reasoning
 
@@ -490,8 +487,6 @@ RP-ReAct (Reasoner-Planner supervising a ReAct Executor), introduced in late 202
 The decoupling is the critical design choice. The RPA maintains a global view of the task but never sees the noisy details of HTML parsing, API timeouts, or button clicks. The PEA handles the noise but never loses sight of its single subgoal. When the PEA fails, it reports a condensed failure summary to the RPA, which triggers **local replanning**: only the affected subgoal and its dependents are regenerated.
 
 Tested on ToolQA — a benchmark of complex multi-hop questions requiring sequential tool use — RP-ReAct outperforms flat ReAct by a wide margin on hard tasks. The gains come from two sources: the RPA's global view prevents local loops (e.g., repeating the same search with slightly different queries), and the PEA's scoped context prevents self-conditioning on irrelevant execution noise. In production deployments, the RPA often runs a larger model such as `claude-sonnet-4.7` for strategic reasoning while the PEA dispatches to a faster `kimi-k2.6` endpoint for tool execution, reducing cost without sacrificing plan quality.
-
-<figure>
 
 ```mermaid
 flowchart TB
@@ -519,8 +514,9 @@ flowchart TB
     P6 -.->|failure| R4
 ```
 
-<figcaption>Figure 18.4 — RP-ReAct three-layer architecture. The RPA generates and maintains a subgoal graph; the PEA executes each subgoal via ReAct; results and failures flow back for local replanning. Context is scoped so execution noise does not corrupt the planner.</figcaption>
-</figure>
+
+*Figure 18.4 — RP-ReAct three-layer architecture. The RPA generates and maintains a subgoal graph; the PEA executes each subgoal via ReAct; results and failures flow back for local replanning. Context is scoped so execution noise does not corrupt the planner.*
+
 
 ### 2.4 ReAcTree, ChatHTN, and ProcLLM: The Frontier of Hierarchical LLM Agents
 
