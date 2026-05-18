@@ -9,7 +9,7 @@ mkdir -p "$RAW_DIR"
 
 for f in "$ROOT_DIR"/chapters/ch*.md; do
   [ -e "$f" ] || continue
-  cp "$f" "$RAW_DIR/$(basename "$f")"
+  cp "$f" "$RAW_DIR/$(basename "$f" .md).txt"
 done
 
 echo "Copied raw markdown files to $RAW_DIR"

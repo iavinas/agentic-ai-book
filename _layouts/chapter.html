@@ -4,7 +4,7 @@ layout: default
 
 <article>
 
-{% assign raw_filename = page.path | split: '/' | last %}
+{% assign raw_filename = page.path | split: '/' | last | replace: '.md', '.txt' %}
 {% assign raw_url = '../assets/raw/' | append: raw_filename %}
 
 <div style="font-family: var(--font-ui); font-size: 13px; color: var(--purple); margin-bottom: 0.6rem;">
