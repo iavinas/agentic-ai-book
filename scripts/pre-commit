@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Auto-sync raw markdown assets when chapters are staged for commit
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+STAGED_CHAPTERS=$(git -C "$ROOT" diff --cached --name-only --diff-filter=ACM -- 'chapters/*.md' || true)
+
+if [ -n "$STAGED_CHAPTERS" ]; then
+  echo "[pre-commit] Syncing raw markdown assets..."
+  "$ROOT/scripts/copy-raw-markdown.sh"
+  git -C "$ROOT" add assets/raw/
+fi
