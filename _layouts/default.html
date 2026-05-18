@@ -267,11 +267,58 @@
     }
     .chapter-footer a:hover { color: var(--purple); }
 
+    /* Copy markdown button */
+    article { position: relative; }
+    .copy-md-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.7rem;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(26, 26, 24, 0.05);
+      transition: all 0.15s ease;
+    }
+    .copy-md-btn:hover {
+      border-color: rgba(83, 74, 183, 0.35);
+      color: var(--purple);
+    }
+    .copy-md-btn:focus-visible {
+      outline: 2px solid var(--purple);
+      outline-offset: 2px;
+    }
+    .copy-md-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    .copy-md-btn .copy-md-check { display: none; }
+    .copy-md-btn .copy-md-success { display: none; color: var(--teal); }
+    .copy-md-btn.copied .copy-md-icon { display: none; }
+    .copy-md-btn.copied .copy-md-check { display: inline-block; color: var(--teal); }
+    .copy-md-btn.copied .copy-md-label { display: none; }
+    .copy-md-btn.copied .copy-md-success { display: inline; }
+
     /* Responsive */
     @media (max-width: 640px) {
       .page-content { padding: 1.5rem 1rem 4rem; }
       h1 { font-size: 1.8rem; }
       h2 { font-size: 1.3rem; }
+      .copy-md-btn {
+        padding: 0.35rem;
+      }
+      .copy-md-btn .copy-md-label,
+      .copy-md-btn .copy-md-success {
+        display: none !important;
+      }
     }
 
     /* Reader highlights (web-highlighter) */
@@ -367,6 +414,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/web-highlighter@0.7.4/dist/web-highlighter.min.js" defer crossorigin></script>
   <script src="{{ '/assets/js/reader-highlights-store.js' | relative_url }}" defer></script>
+  <script src="{{ '/assets/js/copy-markdown.js' | relative_url }}" defer></script>
 
 </body>
 </html>

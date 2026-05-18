@@ -45,6 +45,16 @@ When writing chapter N, the output file is `chapters/chNN.md` (zero-padded to 2 
 
 Jekyll emits chapter pages at `/chapters/chNN.html`. A sibling link like `../ch02/` resolves from that file URL to `/ch02/` (wrong). Use `/chapters/chNN.html` so `relative_url` prepends `baseurl` correctly.
 
+## Build & Publish
+
+Before running `jekyll build` or `jekyll serve`, update the raw markdown assets so the "Copy markdown" button works:
+
+```bash
+./scripts/copy-raw-markdown.sh
+```
+
+This copies every `chapters/ch*.md` into `assets/raw/` so Jekyll serves them as static files. Commit the generated `assets/raw/` files when publishing to GitHub Pages.
+
 ## High-Level Conventions
 
 ### Chapter output
