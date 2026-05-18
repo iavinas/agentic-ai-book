@@ -53,7 +53,17 @@ Before running `jekyll build` or `jekyll serve`, update the raw markdown assets 
 ./scripts/copy-raw-markdown.sh
 ```
 
-This copies every `chapters/ch*.md` into `assets/raw/` so Jekyll serves them as static files. Commit the generated `assets/raw/` files when publishing to GitHub Pages.
+This copies every `chapters/ch*.md` into `assets/raw/` as `.txt` files so Jekyll serves them as static files (Jekyll treats `.md` as pages, not static files). Commit the generated `assets/raw/` files when publishing to GitHub Pages.
+
+### Team setup (pre-commit hook)
+
+The repo includes a tracked pre-commit hook at `scripts/pre-commit` that auto-syncs `assets/raw/` whenever chapters are committed. Each team member should activate it once after cloning:
+
+```bash
+ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+```
+
+After this, `git commit` automatically runs `./scripts/copy-raw-markdown.sh` and re-stages updated raw assets when any `chapters/*.md` file is in the commit.
 
 ## High-Level Conventions
 
@@ -105,7 +115,20 @@ This copies every `chapters/ch*.md` into `assets/raw/` so Jekyll serves them as 
 - Never use `q \cdot k` for dot products — always use `q^\top k`.
 - Never write a multiplication's first occurrence in a chapter without a parenthetical annotation.
 
-## Where the Detail Lives
+## Project Skills (How to Load)
 
-- **Writing a chapter**: the `write-chapter` skill loads automatically when you say "write chapter X". It contains the full 12-step writing protocol, chapter template, style guide, math notation deep-dive, diagram guide, code block rules, intuition patterns, and pre-save checklist.
-- **Reviewing a chapter**: the `review-chapter` skill loads automatically when you say "review chapter X". It contains the 11-step review protocol covering completeness, code quality, fact-checking, bug fixes, code execution, diagram checks, and final prose pass.
+The project has two skills in `.claude/skills/`. These are NOT registered as global skills — the `Skill` tool cannot find them. Load them by reading the file directly with the `Read` tool:
+
+```bash
+# Before writing a chapter, load the write protocol:
+Read .claude/skills/write-chapter.md
+
+# Before reviewing a chapter, load the review protocol:
+Read .claude/skills/review-chapter.md
+```
+
+### write-chapter
+Full 12-step writing protocol: chapter template, style guide, math notation deep-dive, diagram guide, code block rules, intuition patterns, and pre-save checklist. Load before producing any `chapters/chNN.md`.
+
+### review-chapter
+Full 11-step review protocol: completeness checks, code quality, fact-checking, bug fixes, code execution, diagram checks, and final prose pass. Load before auditing any `chapters/chNN.md`.
