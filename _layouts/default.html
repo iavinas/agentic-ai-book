@@ -400,6 +400,49 @@
       line-height: 1.35;
       color: var(--text-3);
     }
+
+    /* Floating toolbar: code / mixed selections (Copy, Highlight, Remove) */
+    #reader-selection-toolbar.reader-selection-toolbar {
+      position: fixed;
+      z-index: 55;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      max-width: min(100vw - 16px, 320px);
+      padding: 5px 6px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(26, 26, 24, 0.14);
+    }
+    #reader-selection-toolbar.reader-selection-toolbar[hidden] {
+      display: none !important;
+    }
+    #reader-selection-toolbar .reader-selection-btn {
+      font: inherit;
+      margin: 0;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #reader-selection-toolbar .reader-selection-btn:hover:not(:disabled) {
+      border-color: rgba(83, 74, 183, 0.35);
+      color: var(--purple);
+    }
+    #reader-selection-toolbar .reader-selection-btn:focus-visible {
+      outline: 2px solid var(--purple);
+      outline-offset: 1px;
+    }
+    #reader-selection-toolbar .reader-selection-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
