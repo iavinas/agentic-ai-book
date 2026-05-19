@@ -199,6 +199,64 @@
       color: var(--text-1); /* fenced-block tokens colored via rouge-syntax.css */
     }
 
+    /* Per-block Copy (see assets/js/copy-code-blocks.js) */
+    .page-content .highlighter-rouge {
+      position: relative;
+    }
+    .page-content .highlighter-rouge pre {
+      padding-top: 2.35rem;
+      padding-right: 5.25rem;
+    }
+    .page-content .code-copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.55rem;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(26, 26, 24, 0.06);
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .page-content .code-copy-btn:hover {
+      border-color: rgba(83, 74, 183, 0.35);
+      color: var(--purple);
+    }
+    .page-content .code-copy-btn:focus-visible {
+      outline: 2px solid var(--purple);
+      outline-offset: 2px;
+    }
+    .page-content .code-copy-btn svg {
+      flex-shrink: 0;
+      width: 13px;
+      height: 13px;
+    }
+    .page-content .code-copy-btn .code-copy-check,
+    .page-content .code-copy-btn .code-copy-success {
+      display: none;
+    }
+    .page-content .code-copy-btn.copied .code-copy-icon,
+    .page-content .code-copy-btn.copied .code-copy-label {
+      display: none;
+    }
+    .page-content .code-copy-btn.copied .code-copy-check {
+      display: inline-block;
+      color: var(--teal);
+    }
+    .page-content .code-copy-btn.copied .code-copy-success {
+      display: inline;
+      color: var(--teal);
+    }
+
     /* Tables */
     table {
       width: 100%;
@@ -319,6 +377,20 @@
       .copy-md-btn .copy-md-label,
       .copy-md-btn .copy-md-success {
         display: none !important;
+      }
+      .page-content .highlighter-rouge pre {
+        padding-right: 3.25rem;
+      }
+      .page-content .code-copy-btn .code-copy-label,
+      .page-content .code-copy-btn .code-copy-success {
+        display: none !important;
+      }
+      .page-content .code-copy-btn.copied .code-copy-label,
+      .page-content .code-copy-btn.copied .code-copy-success {
+        display: none !important;
+      }
+      .page-content .code-copy-btn.copied .code-copy-check {
+        display: inline-block !important;
       }
     }
 
@@ -459,6 +531,7 @@
   <script src="https://cdn.jsdelivr.net/npm/web-highlighter@0.7.4/dist/web-highlighter.min.js" defer crossorigin></script>
   <script src="{{ '/assets/js/reader-highlights-store.js' | relative_url }}" defer></script>
   <script src="{{ '/assets/js/copy-markdown.js' | relative_url }}" defer></script>
+  <script src="{{ '/assets/js/copy-code-blocks.js' | relative_url }}" defer></script>
 
 </body>
 </html>

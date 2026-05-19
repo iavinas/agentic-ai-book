@@ -235,7 +235,8 @@
         '.chapter-footer',
         'figcaption',
         '#reader-highlight-ui',
-        '#' + TOOLBAR_ID
+        '#' + TOOLBAR_ID,
+        '.code-copy-btn'
       ],
       style: { className: 'reader-highlight-wrap' },
       verbose: false
