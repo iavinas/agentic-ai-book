@@ -112,6 +112,18 @@ next_title: "Next Chapter Title"
 - Second key takeaway.
 - Third key takeaway.
 
+---
+
+<!-- CHAPTER PROJECT GOES HERE -->
+
+## Agentic Code Project: [Title]
+
+```python
+# Runnable project code (40–100 lines)
+```
+
+---
+
 ## Further Reading
 
 <!-- Key references from the reference file, as markdown links -->
@@ -179,26 +191,33 @@ This is a **learn-by-doing** book. Every chapter must include code that the read
 
 ### Mandatory rules for code:
 
-1. **Use pure Python for Ch 1–2; PyTorch is welcome in Ch 3 for vector/tensor primitives.** Chapter 1 (Why Agents?) and Chapter 2 (The Agent Loop) are motivational — keep them to plain Python or pseudocode. Chapter 3 (LLM Primitives) covers embeddings, similarity search, and logits masking; PyTorch makes these concepts concrete and is encouraged. Project chapters and architecture chapters must use pure PyTorch for all model code.
+1. **Every chapter must end with a runnable Agentic Code Project.** Place it before the `Further Reading` section. Further Reading should be at the very bottom of the chapter, after the Agentic Code Project and before the final `---` footer. This is a single, self-contained Python script (40–100 lines) that demonstrates the chapter’s core agentic concept. It must contain:
+   - An `LLMClient` class wrapping an OpenAI-compatible API (see LLM Backend below).
+   - An `Agent` class (or equivalent) that uses the `LLMClient` to perform a task.
+   - A `main` block or `run()` method showing a complete interaction loop.
+   - The project must be agent-related (e.g., a ReAct loop, a planning agent, a tool-use agent).
 
-2. **Use pure PyTorch for all model code in project and architecture chapters.** Every layer, attention mechanism, training loop, and forward pass must be written with `torch` and `torch.nn`. Never use high-level wrappers like `transformers.AutoModel` or `transformers.Trainer`.
+2. **Use pure Python for Ch 1–2; PyTorch is welcome in Ch 3 for vector/tensor primitives.** Chapter 1 (Why Agents?) and Chapter 2 (The Agent Loop) are foundational — their Agentic Code Projects must still be complete agents in plain Python. Chapter 3 (LLM Primitives) covers embeddings, similarity search, and logits masking; PyTorch makes these concepts concrete and is encouraged. Project chapters and architecture chapters must use pure PyTorch for all model code.
 
-3. **HuggingFace `datasets` is allowed for data loading only.** When a code example needs real data, use `from datasets import load_dataset`. Never use HuggingFace for the model itself.
+3. **Use pure PyTorch for all model code in project and architecture chapters.** Every layer, attention mechanism, training loop, and forward pass must be written with `torch` and `torch.nn`. Never use high-level wrappers like `transformers.AutoModel` or `transformers.Trainer`.
 
-4. **Minimum code examples per chapter:**
+4. **HuggingFace `datasets` is allowed for data loading only.** When a code example needs real data, use `from datasets import load_dataset`. Never use HuggingFace for the model itself.
+
+5. **Minimum code examples per chapter:**
    - Part I (Foundations): 2-3 code blocks
    - Part II (Single-Agent): 2-4 code blocks
    - Part III-VIII: 2-3 code blocks
    - Project chapters: 5-8 code blocks
+   *(Note: The Agentic Code Project counts as one block. The remaining blocks may be helper functions, ablations, or training loops.)*
 
-5. **What to show in code:**
+6. **What to show in code:**
    - The core mechanism of the chapter
    - A training or fine-tuning loop when applicable
    - Inference / generation when applicable
    - Dimension comments on key tensors: `# (batch, seq_len, d_model)`
 
-6. **Code style:**
-   - Keep snippets to 20-40 lines
+7. **Code style:**
+   - Keep snippets to 20-40 lines (the Agentic Code Project may be longer)
    - Add inline comments explaining non-obvious lines
    - Use descriptive variable names matching the math notation
    - Include shape comments on key operations
@@ -207,26 +226,92 @@ This is a **learn-by-doing** book. Every chapter must include code that the read
 ### Code block syntax:
 
 ```markdown
-We implement the ReAct loop as a Python class with pluggable tools.
+We implement the ReAct loop as a Python class with pluggable tools and an OpenAI-compatible LLM backend.
 
 ```python
+import openai
+import os
+
+class LLMClient:
+    def __init__(self, model="gpt-5.5", use_ollama=False):
+        self.model = model
+        if use_ollama:
+            self.client = openai.OpenAI(
+                base_url="http://localhost:11434/v1",
+                api_key="ollama"
+            )
+        else:
+            self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    def complete(self, messages, temperature=0.7):
+        response = self.client.chat.completions.create(
+            model=self.model, messages=messages, temperature=temperature
+        )
+        return response.choices[0].message.content
+
 class ReActAgent:
-    def __init__(self, llm_backend, tools):
-        self.llm = llm_backend
+    def __init__(self, llm_client, tools):
+        self.llm = llm_client
         self.tools = {t.name: t for t in tools}
         self.trace = []  # list of (thought, action, observation)
 
     def run(self, task, max_steps=10):
+        messages = [{"role": "user", "content": task}]
         for step in range(max_steps):
-            thought = self.llm.think(task, self.trace)
-            action = self.llm.act(thought)
-            if action.is_final_answer:
-                return action.content
-            observation = self.tools[action.tool_name](**action.args)
-            self.trace.append((thought, action, observation))
+            thought = self.llm.complete(messages)
+            # ... parse thought into action ...
+            # action = parse_action(thought)
+            # if action.is_final_answer: return action.content
+            # observation = self.tools[action.tool_name](**action.args)
+            # self.trace.append((thought, action, observation))
+            # messages.append({"role": "assistant", "content": thought})
         return "Max steps reached"
 ```
 ```
+
+### LLM Backend
+
+All agent code must interact with an LLM through an OpenAI-compatible client. The `LLMClient` must be instantiated with a `use_ollama: bool = False` flag.
+
+```python
+import openai
+import os
+
+class LLMClient:
+    def __init__(self, model="gpt-5.5", use_ollama=False):
+        self.model = model
+        if use_ollama:
+            self.client = openai.OpenAI(
+                base_url="http://localhost:11434/v1",
+                api_key="ollama"
+            )
+        else:
+            self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    def complete(self, messages, temperature=0.7):
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=temperature
+        )
+        return response.choices[0].message.content
+```
+
+**Rules:**
+- The `use_ollama` flag is mandatory in the constructor.
+- If `use_ollama=True`, the `base_url` must be `http://localhost:11434/v1` and `api_key` is `"ollama"`.
+- If `use_ollama=False`, use the default OpenAI endpoint (or any other OpenAI-compatible endpoint passed via `base_url`).
+- Never hardcode API keys. Use environment variables or dummy keys for local models.
+
+Use the book's projected 2026 model identifiers so examples feel current. Verified defaults:
+
+| Provider | Default string | Variants |
+|---|---|---|
+| OpenAI | `gpt-5.5` | `gpt-5.5-instant`, `gpt-5.5-pro` |
+| Anthropic | `claude-sonnet-4.7` | `claude-opus-4-7`, `claude-haiku-4-5-20251001` |
+| Local (Ollama) | `kimi-k2.6` | any OpenAI-compatible local model |
+
+**Rule:** Always use the latest canonical name in backend constructors, factory comments, and Further Reading. Never fall back to outdated identifiers (e.g., `gpt-4o`, `claude-3-sonnet`, `llama3.1`).
 
 ---
 
@@ -261,6 +346,8 @@ flowchart TD
     F --> G
 ```
 ```
+
+**Jekyll / GitHub Pages:** If you wrap a Mermaid fence in `<figure>…<figcaption>…</figcaption></figure>`, open the block with `<figure markdown="block">` (Kramdown default does not parse Markdown inside raw HTML). Otherwise the fence stays literal text and Mermaid never runs in the web build. Plain `<figure>` is fine for SVG-only figures.
 
 ### SVG diagrams
 
@@ -387,7 +474,8 @@ The `> **Lead paragraph.**` is the most important paragraph. Rules:
 - Never reuse diagram IDs or function names from another chapter.
 - Never save the file anywhere other than `chapters/chNN.md`.
 - Never use HuggingFace `transformers` for model code — always pure PyTorch (`torch.nn`).
-- Never write a chapter without at least 2 Python code examples (PyTorch for project/architecture chapters and Ch 3; plain Python for Ch 1–2).
+- Never write a chapter without at least 2 Python code examples, one of which must be the end-of-chapter Agentic Code Project.
+- The Agentic Code Project must use an OpenAI-compatible `LLMClient` with a `use_ollama` flag.
 - Never use `\cdot` for matrix multiplication — use juxtaposition.
 - Never use bare juxtaposition or `*` for element-wise products — always use `\odot`.
 - Never use `q \cdot k` for dot products — always use `q^\top k`.
@@ -406,7 +494,8 @@ Before saving the file, verify every item:
 - [ ] No `<text>` element in SVG is missing `font-family`, `font-size`, or `fill`
 - [ ] No SVG element outside the 20-780 safe zone
 - [ ] All KaTeX math is wrapped in `$...$` or `$$...$$`
-- [ ] Minimum code example count met (2+ per chapter, pure Python; PyTorch for project/architecture chapters)
+- [ ] Minimum code example count met (2+ per chapter; Agentic Code Project is one of them)
+- [ ] Agentic Code Project includes an OpenAI-compatible `LLMClient` with `use_ollama` flag
 - [ ] Code blocks have shape comments on key tensors and 1-sentence prose lead-ins
 - [ ] Multiplication notation is consistent (juxtaposition, `\odot`, `^\top`)
 - [ ] Every multiplication type has at least one parenthetical annotation

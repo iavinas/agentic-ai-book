@@ -26,7 +26,7 @@ Open `chapters/chXX.md`. Read the full file.
 
 ### Step 4 — Check code quality (Code First, Eval First)
 - Minimum code blocks: Part I = 2–3; project chapters = 5–8.
-- Language rule: Ch 1–2 → pure Python; Ch 3+ → PyTorch welcome; project → pure PyTorch.
+- Language rule: Ch 1–2 → pure Python; Ch 3+ → Python welcome; project → pure Python.
 - **Every code block must have an inline `assert` or test.**
 - Code must be executable: no missing imports, no undefined variables.
 - Key tensors need shape comments.
@@ -38,6 +38,13 @@ Open `chapters/chXX.md`. Read the full file.
 - Fix attribution errors (e.g., benchmark name vs. study name).
 - Fix nicknames to actual paper titles.
 
+### Step 5a — Check model names
+- Verify all LLM backend default strings use the book's 2026 canonical identifiers:
+  - OpenAI: `gpt-5.5` (variants: `gpt-5.5-instant`, `gpt-5.5-pro`)
+  - Anthropic: `claude-sonnet-4.7` (variants: `claude-opus-4-7`, `claude-haiku-4-5-20251001`)
+  - Local / Ollama: `kimi-k2.6`
+- Never allow outdated identifiers (`gpt-4o`, `claude-3-sonnet`, `llama3.1`) in backend constructors or factory comments.
+
 ### Step 6 — Fix bugs and security issues
 - Replace unsafe patterns (`eval()`, bare `exec()`) with safe alternatives.
 - Add edge-case guards (empty stores, zero-length inputs, division by zero).
@@ -46,6 +53,15 @@ Open `chapters/chXX.md`. Read the full file.
 
 ### Step 7 — Execute all code blocks
 Run every Python block in isolation. If it fails, fix it before proceeding.
+
+- **For blocks that call an LLM backend**, do not use `MockLLM` unless the test is purely about mechanics (e.g., loop counting, trace formatting). Prefer a real API:
+  1. **Try Ollama first** at `http://localhost:11434/v1` with an already-running local model.
+  2. **If no model is running**, launch one with:
+     ```bash
+     ollama launch claude --model kimi-k2.6:cloud
+     ```
+     Then use `base_url="http://localhost:11434/v1"` and a dummy `api_key`.
+  3. Only fall back to a mock when the actual model response is irrelevant to the assertion.
 
 ### Step 8 — Check diagrams
 - Count against Part minimum (see table below).

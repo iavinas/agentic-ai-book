@@ -1,3 +1,8 @@
 .DS_Store
 .plans/*
 .claude/settings.local.json
+
+# Jekyll (local / CI build output — not source of truth)
+_site/
+.jekyll-cache/
+.sass-cache/

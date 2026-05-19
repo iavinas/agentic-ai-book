@@ -45,6 +45,8 @@ When writing chapter N, the output file is `chapters/chNN.md` (zero-padded to 2 
 
 Jekyll emits chapter pages at `/chapters/chNN.html`. A sibling link like `../ch02/` resolves from that file URL to `/ch02/` (wrong). Use `/chapters/chNN.html` so `relative_url` prepends `baseurl` correctly.
 
+For **Mermaid inside `<figure>`**, use `<figure markdown="block">` so Kramdown processes the fenced block on the site (do not enable global `parse_block_html`; it breaks `<figcaption>`).
+
 ## Build & Publish
 
 Before running `jekyll build` or `jekyll serve`, update the raw markdown assets so the "Copy markdown" button works:
@@ -71,6 +73,7 @@ After this, `git commit` automatically runs `./scripts/copy-raw-markdown.sh` and
 - Every chapter is a single file. No truncation. No placeholder text.
 - Target length: 3,000–6,000 words plus diagrams.
 - Every chapter must include at least 2 executable Python code blocks (more for project chapters).
+- **Section ordering**: Summary → Agentic Code Project → Further Reading. Further Reading must be at the very bottom of the chapter.
 
 ### Style at a glance
 - Intuition before formalism. Never open a section with an equation.
@@ -114,6 +117,12 @@ After this, `git commit` automatically runs `./scripts/copy-raw-markdown.sh` and
 - Never use bare juxtaposition or `*` for element-wise products — always use `\odot`.
 - Never use `q \cdot k` for dot products — always use `q^\top k`.
 - Never write a multiplication's first occurrence in a chapter without a parenthetical annotation.
+
+## Web Search & Fetch
+
+**Web Search**: Do not use the default `WebSearch` tool. Use Firecrawl or Tavily instead, alternating in round-robin order across requests.
+
+**Web Fetch (specific URL)**: Use `mcp__fetch__fetch` first. If it fails or returns insufficient content, fall back to Firecrawl or Tavily (round-robin) — these are paid and should only be used when the free fetch fails.
 
 ## Project Skills (How to Load)
 
