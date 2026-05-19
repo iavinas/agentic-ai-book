@@ -25,6 +25,8 @@ The intuition is simple. A language model is a pattern completer. When you ask "
 
 Kojima et al. (2022) pushed this further with **zero-shot CoT**: appending the phrase "Let's think step by step" to any prompt, with no examples required. The effect was startling. On GSM8K, a benchmark of grade-school math word problems, zero-shot CoT raised GPT-3's accuracy from roughly 10% to over 40%. The model had not been retrained. No weights were updated. A single sentence in the prompt unlocked latent capability.
 
+<figure markdown="block">
+
 ```mermaid
 flowchart LR
     A["Direct prompt:<br/>'What is 17 × 38?'"] --> B["Single forward pass<br/>→ high error rate"]
@@ -35,8 +37,8 @@ flowchart LR
     style E fill:#534AB7,color:#fff
 ```
 
-
-*Figure 8.1 — Chain-of-Thought prompting turns a single hard prediction into a sequence of easier completions by using the output sequence as a scratchpad.*
+<figcaption>Figure 8.1 — Chain-of-Thought prompting turns a single hard prediction into a sequence of easier completions by using the output sequence as a scratchpad.</figcaption>
+</figure>
 
 
 ### 1.2 Why "think step by step" is now viewed as a prompting hack
@@ -54,6 +56,8 @@ The paradigm shift of 2024–2025 was driven by a training technique called **Re
 DeepSeek-R1 (January 2025) demonstrated the power of this approach with startling clarity. DeepSeek-R1-Zero was trained with **no supervised fine-tuning at all** — only GRPO (Group Relative Policy Optimization) and rule-based rewards for answer correctness and formatting. During training, the model spontaneously developed behaviors that look like genuine reasoning: it began to pause mid-generation, re-evaluate its own steps, and correct errors. Researchers called this the **"aha moment"** — the emergent discovery of self-reflection through pure optimization.
 
 The implications are profound. Prompted CoT is an **elicited behavior**: the model already has the knowledge, and we are coaxing it out. RLVR-trained reasoning is an **internalized capability**: the model has learned that generating intermediate steps is the optimal strategy for maximizing reward. It reasons not because we asked it to, but because reasoning works.
+
+<figure markdown="block">
 
 ```mermaid
 flowchart TD
@@ -73,8 +77,8 @@ flowchart TD
     style Internalized fill:#0F6E56,color:#fff
 ```
 
-
-*Figure 8.2 — Prompted CoT elicits latent reasoning from a general model. RLVR internalizes reasoning as a learned strategy optimized for verifiable correctness.*
+<figcaption>Figure 8.2 — Prompted CoT elicits latent reasoning from a general model. RLVR internalizes reasoning as a learned strategy optimized for verifiable correctness.</figcaption>
+</figure>
 
 
 ### 1.4 The reasoning model landscape
@@ -147,6 +151,8 @@ A single reasoning chain can be wrong. But if we sample multiple independent cha
 
 The mechanism is variance reduction. A language model's output is a distribution over sequences. Some sequences are correct paths through the reasoning space; others are tempting dead ends. A single greedy decode follows the most likely first step, which may lead into a trap. Sampling many paths explores the local neighborhood of the reasoning space, and the correct answer often lies at the intersection of multiple independent paths.
 
+<figure markdown="block">
+
 ```mermaid
 flowchart TD
     Q["Question"] --> S1["Sample 1<br/>Reasoning → Answer A"]
@@ -163,8 +169,8 @@ flowchart TD
     style V fill:#534AB7,color:#fff
 ```
 
-
-*Figure 8.3 — Self-consistency samples multiple independent reasoning paths and returns the answer that appears most frequently, reducing the impact of any single bad chain.*
+<figcaption>Figure 8.3 — Self-consistency samples multiple independent reasoning paths and returns the answer that appears most frequently, reducing the impact of any single bad chain.</figcaption>
+</figure>
 
 
 ### 2.3 Analogical reasoning
@@ -179,6 +185,8 @@ Some problems are too complex to solve in one shot, even with CoT. **Least-to-mo
 
 This strategy is particularly effective for compositional generalization — problems where the test distribution contains longer compositions than the training distribution. A model trained on two-step problems can generalize to five-step problems if prompted with least-to-most decomposition, because each subproblem stays within the training distribution. Without decomposition, the model fails on the longer composition because the joint distribution of five steps was never seen during training.
 
+<figure markdown="block">
+
 ```mermaid
 flowchart LR
     P["Hard problem:<br/>'Compute total cost<br/>with tax and discount'"] --> D["Decompose:<br/>1. Subtotal<br/>2. Tax<br/>3. Discount<br/>4. Final total"]
@@ -191,8 +199,8 @@ flowchart LR
     style S4 fill:#0F6E56,color:#fff
 ```
 
-
-*Figure 8.4 — Least-to-most prompting decomposes a complex problem into sequentially dependent subproblems, solving each before moving to the next.*
+<figcaption>Figure 8.4 — Least-to-most prompting decomposes a complex problem into sequentially dependent subproblems, solving each before moving to the next.</figcaption>
+</figure>
 
 
 ---
@@ -325,6 +333,8 @@ Gemini 2.5 Flash Thinking (April 2025) introduced a unique dimension of control:
 
 The model adjusts its reasoning depth to fit the budget. With a small budget, it produces concise, direct reasoning similar to standard CoT. With a large budget, it explores multiple approaches, verifies intermediate steps, and backtracks. This controllability makes Gemini 2.5 Flash Thinking attractive for applications where reasoning quality must be traded against latency in real time, such as customer service agents or interactive coding assistants.
 
+<figure markdown="block">
+
 ```mermaid
 flowchart TD
     subgraph O3["OpenAI o3 / o4-mini"]
@@ -349,8 +359,8 @@ flowchart TD
     style Gem fill:#854F0B,color:#fff
 ```
 
-
-*Figure 8.5 — The four dominant reasoning model families as of mid-2026, each optimizing a different axis: tool integration, open emergence, compact openness, and controllability.*
+<figcaption>Figure 8.5 — The four dominant reasoning model families as of mid-2026, each optimizing a different axis: tool integration, open emergence, compact openness, and controllability.</figcaption>
+</figure>
 
 
 > **⚠️ Warning**
@@ -367,6 +377,118 @@ flowchart TD
 - The frontier has shifted to RLVR-trained reasoning models (o3, DeepSeek-R1, QwQ-32B, Gemini 2.5 Flash Thinking) that internalize reasoning as a learned strategy rather than an elicited behavior. Each family offers a distinct trade-off between scale, openness, tool integration, and controllability.
 - Test-time compute scaling — whether via parallel sampling, sequential revision, or adaptive allocation — is now as important as model size for hard reasoning tasks, and the optimal strategy depends on problem difficulty.
 
+
+## Agentic Code Project: Self-Consistent Reasoning Agent with Adaptive Verification
+
+This project brings together three ideas from the chapter—chain-of-thought generation, self-consistency voting, and adaptive verification—into a single runnable agent. The agent samples multiple reasoning traces, extracts answers, performs a majority vote, and automatically invokes a verifier when confidence is low. The `LLMClient` is pluggable between cloud APIs and local Ollama.
+
+```python
+import os
+import re
+from collections import Counter
+
+import openai
+
+
+class LLMClient:
+    def __init__(self, model="gpt-5.5", use_ollama=False):
+        self.model = model
+        if use_ollama:
+            self.client = openai.OpenAI(
+                base_url="http://localhost:11434/v1",
+                api_key="ollama"
+            )
+        else:
+            self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    def complete(self, messages, temperature=0.7):
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=temperature
+        )
+        return response.choices[0].message.content
+
+
+class SelfConsistentAgent:
+    """An agent that reasons via CoT, votes across samples, and verifies when uncertain."""
+
+    def __init__(self, llm_client, num_samples=5, confidence_threshold=0.6):
+        self.llm = llm_client
+        self.num_samples = num_samples
+        self.confidence_threshold = confidence_threshold
+
+    def solve(self, problem):
+        # Stage 1: Generate diverse reasoning chains
+        candidates = []
+        for _ in range(self.num_samples):
+            messages = [
+                {"role": "system", "content": "You are a careful math solver. Think step by step. End with 'Answer: <number>'."},
+                {"role": "user", "content": problem}
+            ]
+            reasoning = self.llm.complete(messages, temperature=0.8)
+            answer = self._extract_answer(reasoning)
+            candidates.append({"reasoning": reasoning, "answer": answer})
+
+        # Stage 2: Self-consistency via majority vote
+        valid = [c for c in candidates if c["answer"] is not None]
+        if not valid:
+            return {"answer": None, "trace": candidates[0]["reasoning"], "confidence": 0.0}
+
+        answers = [c["answer"] for c in valid]
+        vote_counts = Counter(answers)
+        best_answer, best_count = vote_counts.most_common(1)[0]
+        confidence = best_count / len(answers)
+
+        # Stage 3: Adaptive verification when confidence is low
+        if confidence < self.confidence_threshold:
+            verify_messages = [
+                {"role": "system", "content": "Verify the following answer. If wrong, provide corrected reasoning. End with 'Answer: <number>'."},
+                {"role": "user", "content": f"Problem: {problem}\nProposed answer: {best_answer}\nPlease verify step by step."}
+            ]
+            verified = self.llm.complete(verify_messages, temperature=0.3)
+            verified_answer = self._extract_answer(verified)
+            if verified_answer:
+                best_answer = verified_answer
+                confidence = 1.0
+
+        return {
+            "answer": best_answer,
+            "confidence": confidence,
+            "traces": [c["reasoning"] for c in candidates],
+            "votes": dict(vote_counts)
+        }
+
+    def _extract_answer(self, text):
+        match = re.search(r"Answer:\s*([0-9\.]+)", text)
+        if match:
+            return match.group(1)
+        numbers = re.findall(r"[0-9\.]+", text)
+        return numbers[-1] if numbers else None
+
+
+def main():
+    client = LLMClient(model="gpt-5.5", use_ollama=False)
+    agent = SelfConsistentAgent(client, num_samples=3)
+
+    problem = "A bakery sells 240 cupcakes in 4 hours. How many does it sell in 7 hours at the same rate?"
+    result = agent.solve(problem)
+
+    print(f"Problem: {problem}")
+    print(f"Answer: {result['answer']}")
+    print(f"Confidence: {result['confidence']:.2f}")
+    print(f"Vote distribution: {result['votes']}")
+    print("\n--- Sample Reasoning Trace ---")
+    print(result["traces"][0][:600] + "...")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+The agent exposes a clean three-stage pipeline: **generate → vote → verify**. Increasing `num_samples` trades cost for accuracy; lowering `confidence_threshold` makes the agent more cautious. For local testing, set `use_ollama=True` and run against a math-capable model such as `kimi-k2.6` or `qwq-32b`.
+
+
 ## Further Reading
 
 - [Chain-of-Thought Prompting Elicits Reasoning in Large Language Models](https://arxiv.org/abs/2201.11903) — Wei et al., 2022. The foundational paper that introduced CoT prompting.
@@ -380,7 +502,6 @@ flowchart TD
 - [Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters](https://arxiv.org/abs/2408.03314) — Snell et al., 2024. Difficulty-adaptive parallel vs. sequential scaling.
 - [Understanding Performance Gap Between Parallel and Sequential Sampling in Large Reasoning Models](https://arxiv.org/abs/2604.05868) — Gu et al., 2026. Parallel sampling outperforms sequential due to greater exploration.
 - [Thinking Long, but Short: Stable Sequential Test-Time Scaling for Large Reasoning Models](https://arxiv.org/abs/2601.09855) — Metel et al., 2026. Min-Seek stabilizes sequential scaling by keeping only the shortest valid past thought.
-
 ---
 
 <!-- Navigation is rendered automatically by _layouts/chapter.html -->

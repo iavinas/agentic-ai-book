@@ -486,6 +486,34 @@ Because the tree search is decoupled from the domain, you can reuse the exact sa
 
 ---
 
+## 5. 2026 Frontiers: System-Aware Test-Time Scaling
+
+### 5.1 Adaptive Parallel MCTS with negative early exit
+
+By early 2026, the research community had shifted from algorithmic novelty to production deployment. The central question was no longer *can* tree search improve reasoning, but *can it run fast enough to serve real users?*
+
+Standard MCTS has a severe latency problem: a small fraction of search requests consume disproportionate compute because the tree keeps exploring even when further expansion yields no benefit. Kim et al. (April 2026) introduced **negative early exit**, which prunes trajectories that continue consuming computation without improving solution quality. The key insight is symmetric to positive early exit (stopping when confidence is high): stop when confidence is *flat*. If the best leaf score has not improved after a fixed number of expansions, the subtree is marked unproductive and killed.
+
+Complementing this is an **adaptive boosting mechanism** that redistributes the reclaimed compute to concurrent searches with higher potential. Rather than letting each search monopolize its own GPU time slice, the scheduler dynamically reallocates KV-cache slots and batch capacity toward searches that are still making progress. Integrated into vLLM, this system achieves **2.83× lower p99 latency** than serial MCTS and **2.44× higher throughput** without accuracy loss. The implication is that tree-based reasoning is no longer a research luxury — it is becoming a deployable primitive.
+
+### 5.2 Decocted experience: context as a scaling axis
+
+While most test-time scaling work increases *output* budget (more tokens, more rollouts), Shen et al. (April 2026) identified *context* as a complementary scaling axis. Their framework, **decocted experience**, argues that raw interaction traces are too noisy to be useful as context. Instead, an agent should extract the *essence* from its experience — lessons distilled into compact, retrievable structures — and inject that distilled context at test time.
+
+The results are striking: on web-browsing and software-engineering agents, providing decoction-based context outperforms both raw trace context and zero-context baselines, and the scaling curve is better behaved. Raw experience eventually hurts performance because the context window fills with irrelevant detail; decoction compresses the signal and sustains gains. This dovetails with GoT: a graph of distilled experiences becomes a reusable reasoning scaffold that the agent consults before expanding a new tree.
+
+### 5.3 Atom of Thoughts: Markovian reasoning chains
+
+**Atom of Thoughts (AoT)**, presented at NeurIPS 2025 and gaining traction through early 2026, reframes reasoning as a **Markov process**. The key observation is that current tree-search methods retain the full reasoning history at every node, but the LLM only needs the *current state* to generate the next step. AoT decomposes a problem into atomic questions where each state depends only on its immediate predecessor, eliminating redundant historical context.
+
+This Markovian structure has two practical benefits. First, it reduces the context-window pressure that makes deep ToT expensive. Second, it enables seamless integration with MCTS and beam search because each atomic transition is a self-contained local decision. On math and code benchmarks, AoT consistently outperforms standard CoT at the same compute budget by eliminating wasted tokens on historical narration. The broader lesson is that *how* you represent a reasoning step matters as much as *how many* steps you generate.
+
+> **Key Insight**
+>
+> The 2026 frontier is not about inventing new search algorithms. It is about *system-aware* scaling: pruning unproductive searches, reallocating compute dynamically, distilling experience into context, and compressing reasoning history into Markovian atoms. These are engineering advances, but they determine whether tree-based reasoning leaves the lab.
+
+---
+
 ## Summary
 
 - **Tree of Thoughts** turns a linear reasoning chain into a branching search tree. The LLM generates candidate thoughts; an evaluator scores them; a search algorithm (BFS, DFS, or beam search) navigates the space.
@@ -494,6 +522,191 @@ Because the tree search is decoupled from the domain, you can reuse the exact sa
 - **Graph of Thoughts** generalizes the tree into a directed graph, enabling two primitives that trees cannot support: **aggregation** (merging insights from parallel branches) and **revision** (editing a thought in place without discarding its descendants).
 - **The choice of structure is task-dependent.** Use CoT for simple sequential problems, ToT for problems with evaluable intermediate states, and GoT for tasks requiring synthesis or iterative refinement. A production agent often cascades from the cheapest to the most expensive structure.
 - **A pure-Python ToT solver** separates the search algorithm from the domain. With a `ThoughtNode`, a beam-search loop, and pluggable generator and evaluator functions, the same code solves Game of 24, Blocksworld, or any other stateful reasoning task.
+- **2026 frontiers** focus on deployability. Adaptive Parallel MCTS cuts p99 latency via negative early exit and dynamic resource boosting. Decocted experience turns raw traces into distilled context. Atom of Thoughts compresses reasoning into Markovian transitions that slash context-window pressure.
+
+## Agentic Code Project: LLM-Powered Tree-of-Thought Solver
+
+The previous examples used hand-coded generators and rule-based evaluators. A production agent delegates both to an LLM. This project wires the `beam_search_tot` framework from Section 4 to a live language model, letting the LLM propose arithmetic operations *and* judge their promise. The result is a complete agent that reasons via tree search with no domain-specific heuristics.
+
+```python
+import os
+import openai
+import random
+from itertools import combinations
+from typing import List, Optional
+
+class LLMClient:
+    """OpenAI-compatible LLM backend with optional Ollama fallback."""
+    def __init__(self, model="gpt-5.5", use_ollama=False):
+        self.model = model
+        if use_ollama:
+            self.client = openai.OpenAI(
+                base_url="http://localhost:11434/v1",
+                api_key="ollama"
+            )
+        else:
+            self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    def complete(self, messages, temperature=0.7):
+        response = self.client.chat.completions.create(
+            model=self.model, messages=messages, temperature=temperature
+        )
+        return response.choices[0].message.content
+
+
+class ThoughtNode:
+    """A single node in the reasoning tree."""
+    def __init__(self, state: List[float], thought: str, parent: Optional["ThoughtNode"] = None):
+        self.state = state          # remaining numbers
+        self.thought = thought      # natural-language step
+        self.parent = parent
+        self.children: List[ThoughtNode] = []
+        self.value: Optional[float] = None
+
+    def path(self) -> List["ThoughtNode"]:
+        node, seq = self, []
+        while node:
+            seq.append(node)
+            node = node.parent
+        return list(reversed(seq))
+
+
+class ToTAgent:
+    """Tree-of-Thought agent that uses an LLM to generate and evaluate thoughts."""
+    def __init__(self, llm_client: LLMClient, beam_width: int = 3, max_depth: int = 4):
+        self.llm = llm_client
+        self.beam_width = beam_width
+        self.max_depth = max_depth
+
+    # ------------------------------------------------------------------
+    # LLM-based generator
+    # ------------------------------------------------------------------
+    def _generate_candidates(self, node: ThoughtNode, k: int) -> List[ThoughtNode]:
+        prompt = (
+            "You are solving the Game of 24. "
+            f"Current numbers: {node.state}.\n"
+            "Propose exactly one valid arithmetic step using two of the numbers. "
+            "Return ONLY a single line in this exact format:\n"
+            "  OP: a + b = c\n"
+            "Use +, -, *, or /. Do not explain."
+        )
+        messages = [
+            {"role": "system", "content": "You generate single arithmetic steps for Game of 24."},
+            {"role": "user", "content": prompt}
+        ]
+        children = []
+        seen = set()
+        # Sample k diverse candidates via temperature
+        for _ in range(k * 2):  # oversample then deduplicate
+            raw = self.llm.complete(messages, temperature=0.9)
+            parsed = self._parse_op(raw, node.state)
+            if parsed is None:
+                continue
+            new_state, thought = parsed
+            key = tuple(sorted(round(x, 6) for x in new_state))
+            if key in seen:
+                continue
+            seen.add(key)
+            children.append(ThoughtNode(new_state, thought, parent=node))
+            if len(children) >= k:
+                break
+        return children
+
+    @staticmethod
+    def _parse_op(text: str, current: List[float]):
+        """Parse 'OP: a + b = c' and produce the next state."""
+        import operator, re
+        ops = {"+": operator.add, "-": operator.sub, "*": operator.mul, "/": operator.truediv}
+        m = re.search(r"OP:\s*([\d\.]+)\s*([+\-*/])\s*([\d\.]+)\s*=\s*([\d\.]+)", text)
+        if not m:
+            return None
+        a_str, sym, b_str, c_str = m.groups()
+        a, b, c = float(a_str), float(b_str), float(c_str)
+        if sym not in ops or abs(ops[sym](a, b) - c) > 1e-3:
+            return None
+        if a not in current or b not in current:
+            return None
+        new_state = [x for x in current if x != a]  # remove one occurrence of a
+        new_state.remove(b)                         # remove one occurrence of b
+        new_state.append(c)
+        return new_state, f"{a} {sym} {b} = {c}"
+
+    # ------------------------------------------------------------------
+    # LLM-based evaluator
+    # ------------------------------------------------------------------
+    def _evaluate(self, node: ThoughtNode) -> float:
+        if len(node.state) == 1:
+            return float("inf") if abs(node.state[0] - 24) < 1e-3 else -abs(node.state[0] - 24)
+        prompt = (
+            f"Current numbers: {node.state}.\n"
+            "Rate how promising this state is for reaching 24. "
+            "Reply with ONLY an integer from 1 (hopeless) to 10 (almost there)."
+        )
+        messages = [
+            {"role": "system", "content": "You evaluate Game of 24 states."},
+            {"role": "user", "content": prompt}
+        ]
+        raw = self.llm.complete(messages, temperature=0.1)
+        try:
+            score = int(raw.strip().split()[0])
+        except (ValueError, IndexError):
+            score = 5
+        return float(score)
+
+    # ------------------------------------------------------------------
+    # Beam search loop
+    # ------------------------------------------------------------------
+    def solve(self, numbers: List[float]) -> Optional[ThoughtNode]:
+        root = ThoughtNode(numbers, "Start")
+        frontier: List[ThoughtNode] = [root]
+
+        for depth in range(self.max_depth):
+            candidates: List[ThoughtNode] = []
+            for node in frontier:
+                children = self._generate_candidates(node, self.beam_width)
+                for child in children:
+                    child.value = self._evaluate(child)
+                    node.children.append(child)
+                    candidates.append(child)
+
+            if not candidates:
+                break
+
+            candidates.sort(key=lambda n: n.value if n.value is not None else -1e9, reverse=True)
+            frontier = candidates[:self.beam_width]
+
+            for node in frontier:
+                if len(node.state) == 1 and abs(node.state[0] - 24) < 1e-3:
+                    return node
+
+        return frontier[0] if frontier else None
+
+
+def main():
+    client = LLMClient(model="gpt-5.5", use_ollama=False)
+    agent = ToTAgent(client, beam_width=3, max_depth=4)
+
+    problem = [4, 9, 10, 13]
+    print(f"Solving Game of 24 for {problem}...")
+    best = agent.solve(problem)
+
+    if best and len(best.state) == 1 and abs(best.state[0] - 24) < 1e-3:
+        print("Solution found!")
+        for n in best.path():
+            print(f"  {n.thought} -> {n.state}")
+    else:
+        print("No solution found within budget.")
+        if best:
+            print(f"Best attempt ended at: {best.state}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+The agent above replaces the hand-coded `generate_game_of_24_children` and `evaluate_game_of_24` with LLM calls. In practice, the LLM generator is slower and more expensive than a deterministic rule, but it is *generic*: the same `_generate_candidates` and `_evaluate` methods work for any problem whose state can be described in natural language. The trade-off is flexibility versus cost, and it is why production systems usually cache evaluation scores and use lightweight PRMs whenever possible.
+
+---
 
 ## Further Reading
 
@@ -503,5 +716,8 @@ Because the tree search is decoupled from the domain, you can reuse the exact sa
 - [Adaptive Graph of Thoughts: Test-Time Adaptive Reasoning Unifying Chain, Tree, and Graph Structures](https://arxiv.org/abs/2502.05078) — Pandey et al., 2025. Dynamic DAG decomposition with +46.2% on GPQA.
 - [CMCTS: A Constrained Monte Carlo Tree Search Framework for Mathematical Reasoning](https://arxiv.org/abs/2502.11169) — Lin et al., 2025. Constrained action spaces + PRM guidance.
 - [Dynamic Parallel Tree Search for Efficient LLM Reasoning](https://arxiv.org/abs/2502.16235) — Ding et al., ACL 2025. 2–4× speedup via parallel batched tree expansion.
+- [Adaptive Parallel Monte Carlo Tree Search for Efficient Test-time Compute Scaling](https://arxiv.org/abs/2604.00510) — Kim et al., 2026. Negative early exit + adaptive boosting; 2.83× lower p99 latency in vLLM.
+- [Decocted Experience Improves Test-Time Inference in LLM Agents](https://arxiv.org/abs/2604.04373) — Shen et al., 2026. Context as a scaling axis via distilled experience.
+- [Atom of Thoughts for Markov LLM Test-Time Scaling](https://arxiv.org/abs/2502.12018) — Luo et al., NeurIPS 2025. Markovian reasoning decomposition for efficient test-time scaling.
 
 ---
