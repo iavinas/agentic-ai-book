@@ -6,3 +6,4 @@
 _site/
 .jekyll-cache/
 .sass-cache/
+chapters/projects/*
