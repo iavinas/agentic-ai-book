@@ -23,6 +23,7 @@ Open `chapters/chXX.md`. Read the full file.
 - Does the chapter cover every TOC bullet?
 - Is the lead paragraph vivid and concrete?
 - Does the Summary capture key takeaways?
+- **Section ordering:** Verify the chapter ends with `Summary` → `Agentic Code Project` → `Further Reading`. Further Reading must be at the very bottom.
 
 ### Step 4 — Check code quality (Code First, Eval First)
 - Minimum code blocks: Part I = 2–3; project chapters = 5–8.

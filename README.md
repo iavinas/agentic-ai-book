@@ -63,6 +63,8 @@ jekyll serve
 
 ### Writing a Chapter
 
+See `CLAUDE.md` and `.claude/skills/` for writing and review protocols.
+
 ```bash
 # Generate raw markdown assets for GitHub Pages
 ./scripts/copy-raw-markdown.sh
@@ -72,7 +74,7 @@ jekyll serve
 
 ## License
 
-TBD — open source.
+[MIT License](LICENSE) — free to modify and reuse.
 
 ---
 

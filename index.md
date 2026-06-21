@@ -185,9 +185,9 @@ A comprehensive hands-on technical book covering autonomous AI agents from first
 ## About This Book
 
 - **Format**: Markdown with YAML frontmatter, KaTeX math, and code blocks.
-- **Dependencies**: Pure Python 3.11+, PyTorch. No heavy frameworks.
-- **License**: TBD — open source.
-- **Contributing**: See `CLAUDE.md` for chapter writing guidelines.
+- **Dependencies**: Pure Python 3.11+. No heavy frameworks.
+- **License**: [MIT License](LICENSE) — free to modify and reuse.
+- **Contributing**: See `CLAUDE.md` and `.claude/skills/` for writing and review protocols.
 
 ---
 
